@@ -7,10 +7,14 @@ import java.util.UUID
 // =============================================================================
 // Messages du protocole FCS
 // Définit tous les messages échangés entre acteurs du système
+//
+// NOTE: Les traits sont non-sealed car étendus depuis fcs.actors.*
+// Les objets de protocole sont suffixés "Protocol" pour éviter les
+// collisions de noms avec les acteurs dans fcs.actors
 // =============================================================================
 
 /** Trait racine pour tous les messages du système FCS */
-sealed trait FCSMessage extends Serializable
+trait FCSMessage extends Serializable
 
 /** Identifiant unique pour un cycle de tir */
 case class FireCycleId(value: String = UUID.randomUUID().toString)
@@ -42,13 +46,13 @@ enum AmmoType:
 // =============================================================================
 // Messages du SensorActor
 // =============================================================================
-object SensorActor:
-  sealed trait Command extends FCSMessage
+object SensorProtocol:
+  trait Command extends FCSMessage
   case object StartScanning extends Command
   case object StopScanning extends Command
   case class SimulateDetection(coords: TargetCoordinates) extends Command
 
-  sealed trait Event extends FCSMessage
+  trait Event extends FCSMessage
   case class TargetDetected(
       cycleId: FireCycleId,
       coordinates: TargetCoordinates,
@@ -58,16 +62,16 @@ object SensorActor:
 // =============================================================================
 // Messages du TrackingActor
 // =============================================================================
-object TrackingActor:
-  sealed trait Command extends FCSMessage
+object TrackingProtocol:
+  trait Command extends FCSMessage
   case class TrackTarget(
       cycleId: FireCycleId,
       coordinates: TargetCoordinates,
-      replyTo: ActorRef[FireControlActor.Command]
+      replyTo: ActorRef[FireControlProtocol.Command]
   ) extends Command
   case class LoseTrack(cycleId: FireCycleId) extends Command
 
-  sealed trait Event extends FCSMessage
+  trait Event extends FCSMessage
   case class TargetLocked(
       cycleId: FireCycleId,
       solution: BallisticSolution,
@@ -82,17 +86,17 @@ object TrackingActor:
 // =============================================================================
 // Messages du AmmoActor
 // =============================================================================
-object AmmoActor:
-  sealed trait Command extends FCSMessage
+object AmmoProtocol:
+  trait Command extends FCSMessage
   case class LoadAmmo(
       cycleId: FireCycleId,
       ammoType: AmmoType,
-      replyTo: ActorRef[FireControlActor.Command]
+      replyTo: ActorRef[FireControlProtocol.Command]
   ) extends Command
   case class ConsumeAmmo(cycleId: FireCycleId) extends Command
   case object QueryStock extends Command
 
-  sealed trait Event extends FCSMessage
+  trait Event extends FCSMessage
   case class AmmoLoaded(
       cycleId: FireCycleId,
       ammoType: AmmoType,
@@ -111,12 +115,12 @@ object AmmoActor:
 // =============================================================================
 // Messages du CommandActor
 // =============================================================================
-object CommandActor:
-  sealed trait Command extends FCSMessage
+object CommandProtocol:
+  trait Command extends FCSMessage
   case class RequestAuthorization(
       cycleId: FireCycleId,
       solution: BallisticSolution,
-      replyTo: ActorRef[FireControlActor.Command]
+      replyTo: ActorRef[FireControlProtocol.Command]
   ) extends Command
   case class RevokeAuthorization(cycleId: FireCycleId) extends Command
 
@@ -127,7 +131,7 @@ object CommandActor:
       minConfidence: Double = 0.8     // confiance min pour la solution de tir
   )
 
-  sealed trait Event extends FCSMessage
+  trait Event extends FCSMessage
   case class FireAuthorized(
       cycleId: FireCycleId,
       roe: ROE,
@@ -142,8 +146,8 @@ object CommandActor:
 // =============================================================================
 // Messages du FireControlActor (Orchestrateur central)
 // =============================================================================
-object FireControlActor:
-  sealed trait Command extends FCSMessage
+object FireControlProtocol:
+  trait Command extends FCSMessage
 
   // Réponses des sous-acteurs
   case class TargetLockConfirmed(
@@ -176,10 +180,10 @@ object FireControlActor:
   case object CooldownComplete extends Command
 
   // Commandes internes (timers)
-  private[actors] case class CooldownTimeout(cycleId: FireCycleId) extends Command
-  private[actors] case class ReloadTimeout(cycleId: FireCycleId) extends Command
+  case class CooldownTimeout(cycleId: FireCycleId) extends Command
+  case class ReloadTimeout(cycleId: FireCycleId) extends Command
 
-  sealed trait Event extends FCSMessage
+  trait Event extends FCSMessage
   case class FireExecuted(
       cycleId: FireCycleId,
       solution: BallisticSolution,
@@ -196,7 +200,7 @@ object FireControlActor:
 // Messages Kafka
 // =============================================================================
 object KafkaMessages:
-  sealed trait KafkaCommand extends FCSMessage
+  trait KafkaCommand extends FCSMessage
   case class PublishEvent(
       topic: String,
       key: String,
@@ -215,8 +219,8 @@ object KafkaMessages:
 // =============================================================================
 // Messages du SupervisorActor
 // =============================================================================
-object SupervisorActor:
-  sealed trait Command extends FCSMessage
+object SupervisorProtocol:
+  trait Command extends FCSMessage
   case object StartSystem extends Command
   case object StopSystem extends Command
   case class ReportError(

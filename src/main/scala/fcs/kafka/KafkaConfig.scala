@@ -1,15 +1,16 @@
 package fcs.kafka
 
-import akka.kafka.{ConsumerSettings, ProducerSettings}
-import akka.actor.typed.ActorSystem
-import org.apache.kafka.common.serialization.{StringDeserializer, StringSerializer}
 import org.apache.kafka.clients.producer.ProducerConfig
 import org.apache.kafka.clients.consumer.ConsumerConfig
-import com.typesafe.config.Config
+import java.util.Properties
 
 // =============================================================================
 // Configuration Kafka pour le FCS
 // Garanties critiques : acks=all, idempotence, read_committed
+//
+// NOTE: Utilise les Properties Kafka natifs (java client).
+// L'intégration Alpakka Kafka (akka-stream-kafka) sera ajoutée
+// quand un broker réel sera configuré.
 // =============================================================================
 
 object KafkaConfig:
@@ -18,19 +19,29 @@ object KafkaConfig:
   val ConsumerGroup           = "fcs-consumer-group"
 
   /** Configuration producteur avec garanties critiques */
-  def producerSettings(system: ActorSystem[?]): ProducerSettings[String, String] =
-    ProducerSettings(system, new StringSerializer, new StringSerializer)
-      .withBootstrapServers(DefaultBootstrapServers)
-      .withProperty(ProducerConfig.ACKS_CONFIG, "all")
-      .withProperty(ProducerConfig.ENABLE_IDEMPOTENCE_CONFIG, "true")
-      .withProperty(ProducerConfig.RETRIES_CONFIG, "3")
-      .withProperty(ProducerConfig.MAX_IN_FLIGHT_REQUESTS_PER_CONNECTION, "1")
+  def producerProperties: Properties =
+    val props = new Properties()
+    props.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, DefaultBootstrapServers)
+    props.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG,
+      "org.apache.kafka.common.serialization.StringSerializer")
+    props.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG,
+      "org.apache.kafka.common.serialization.StringSerializer")
+    props.put(ProducerConfig.ACKS_CONFIG, "all")
+    props.put(ProducerConfig.ENABLE_IDEMPOTENCE_CONFIG, "true")
+    props.put(ProducerConfig.RETRIES_CONFIG, "3")
+    props.put(ProducerConfig.MAX_IN_FLIGHT_REQUESTS_PER_CONNECTION, "1")
+    props
 
   /** Configuration consommateur avec garanties critiques */
-  def consumerSettings(system: ActorSystem[?]): ConsumerSettings[String, String] =
-    ConsumerSettings(system, new StringDeserializer, new StringDeserializer)
-      .withBootstrapServers(DefaultBootstrapServers)
-      .withGroupId(ConsumerGroup)
-      .withProperty(ConsumerConfig.ISOLATION_LEVEL_CONFIG, "read_committed")
-      .withProperty(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest")
-      .withProperty(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, "false")
+  def consumerProperties: Properties =
+    val props = new Properties()
+    props.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, DefaultBootstrapServers)
+    props.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG,
+      "org.apache.kafka.common.serialization.StringDeserializer")
+    props.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG,
+      "org.apache.kafka.common.serialization.StringDeserializer")
+    props.put(ConsumerConfig.GROUP_ID_CONFIG, ConsumerGroup)
+    props.put(ConsumerConfig.ISOLATION_LEVEL_CONFIG, "read_committed")
+    props.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest")
+    props.put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, "false")
+    props
