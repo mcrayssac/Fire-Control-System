@@ -108,3 +108,5 @@ Fire-Control-System/
 ## Contributeurs
 
 - Paul Pitiot
+- Maxime Crayssac
+- Arthur Neuez
