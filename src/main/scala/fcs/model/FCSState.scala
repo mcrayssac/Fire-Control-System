@@ -2,28 +2,18 @@ package fcs.model
 
 import java.time.Instant
 
-// =============================================================================
-// État du système FCS
-// Correspond aux places du réseau de Pétri
-// =============================================================================
-
-/** État global du système de contrôle de tir */
 enum FCSPhase:
-  case Idle            // P0 : au repos
-  case TargetDetected  // P1 : cible détectée
-  case TargetLocked    // P2 : cible verrouillée
-  case AmmoLoaded      // P3 : munition chargée
-  case FireAuthorized  // P4 : tir autorisé
-  case ReadyToFire     // P5 : préconditions réunies
-  case Firing          // P6 : tir en cours
-  case Reloading       // P7 : rechargement
-  case Cooldown        // P8 : refroidissement
-  case Error           // P9 : erreur critique
+  case Idle
+  case TargetDetected
+  case TargetLocked
+  case AmmoLoaded
+  case FireAuthorized
+  case ReadyToFire
+  case Firing
+  case Reloading
+  case Cooldown
+  case Error
 
-/** État interne du FireControlActor
-  *
-  * Suit les préconditions de tir (correspond à la synchronisation T4)
-  */
 case class FireCycleState(
     cycleId: FireCycleId,
     phase: FCSPhase = FCSPhase.Idle,
@@ -37,15 +27,12 @@ case class FireCycleState(
     endTime: Option[Instant] = None,
     error: Option[String] = None
 ):
-  /** Vérifie si toutes les préconditions de tir sont réunies (T4 sync) */
   def isReadyToFire: Boolean =
     targetLocked && ammoLoaded && fireAuthorized
 
-  /** Durée du cycle en millisecondes */
   def durationMs: Option[Long] =
     endTime.map(end => java.time.Duration.between(startTime, end).toMillis)
 
-/** Compteur de munitions (correspond à P10 : Ammo_Stock) */
 case class AmmoStock(
     stock: Map[AmmoType, Int] = Map(
       AmmoType.APFSDS -> 10,

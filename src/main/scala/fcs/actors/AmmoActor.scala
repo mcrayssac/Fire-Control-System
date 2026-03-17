@@ -6,11 +6,6 @@ import fcs.model.*
 import fcs.model.AmmoProtocol.*
 import fcs.kafka.Topics
 
-// =============================================================================
-// AmmoActor — Gestion des munitions
-// Réseau de Pétri : transition T2 (load_ammo), P10 → P3
-// =============================================================================
-
 object AmmoActor:
 
   def apply(
@@ -30,7 +25,7 @@ object AmmoActor:
             case Some(newStock) =>
               val remaining = newStock.available(ammoType)
               context.log.info(
-                s"📦 AmmoActor: Chargement ${ammoType} [${cycleId.value.take(8)}] — stock restant: $remaining"
+                s"AmmoActor: Chargement ${ammoType} [${cycleId.value.take(8)}] - stock restant: $remaining"
               )
               replyTo ! FireControlProtocol.AmmoLoadConfirmed(cycleId, ammoType, remaining)
               kafkaProducer ! KafkaMessages.PublishEvent(
@@ -38,16 +33,16 @@ object AmmoActor:
                 payload = s"""{"cycleId":"${cycleId.value}","ammoType":"$ammoType","remaining":$remaining}"""
               )
               if remaining <= 2 then
-                context.log.warn(s"⚠️ AmmoActor: Stock bas pour $ammoType — $remaining restant(s)")
+                context.log.warn(s"AmmoActor: Stock bas pour $ammoType - $remaining restant(s)")
               ready(kafkaProducer, newStock)
             case None =>
-              context.log.error(s"🚫 AmmoActor: Stock épuisé pour $ammoType [${cycleId.value.take(8)}]")
+              context.log.error(s"AmmoActor: Stock epuise pour $ammoType [${cycleId.value.take(8)}]")
               replyTo ! FireControlProtocol.AmmoLoadFailed(cycleId)
               Behaviors.same
         case ConsumeAmmo(cycleId) =>
           context.log.info(s"AmmoActor: Munition consommée [${cycleId.value.take(8)}]")
           Behaviors.same
         case QueryStock =>
-          context.log.info(s"📊 AmmoActor: Stock actuel — ${stock.stock}")
+          context.log.info(s"AmmoActor: Stock actuel - ${stock.stock}")
           Behaviors.same
     }

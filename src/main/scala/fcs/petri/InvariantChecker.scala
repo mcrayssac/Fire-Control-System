@@ -1,11 +1,5 @@
 package fcs.petri
 
-// =============================================================================
-// Vérificateur d'invariants métier
-// Vérifie INV1 à INV10 sur l'ensemble des marquages atteignables
-// =============================================================================
-
-/** Résultat de la vérification d'un invariant */
 case class InvariantResult(
     id: String,
     description: String,
@@ -14,13 +8,12 @@ case class InvariantResult(
     counterExample: Option[Marking] = None,
     details: String = ""
 ):
-  def status: String = if satisfied then "✅ SATISFAIT" else "❌ VIOLÉ"
+  def status: String = if satisfied then "SATISFAIT" else "VIOLE"
 
   override def toString: String =
     val ce = counterExample.map(m => s"\n      Contre-exemple: $m").getOrElse("")
     s"  $status  $id — $description$ce"
 
-/** Rapport complet de vérification */
 case class VerificationReport(results: Vector[InvariantResult]):
   def allSatisfied: Boolean = results.forall(_.satisfied)
   def numSatisfied: Int = results.count(_.satisfied)
@@ -28,23 +21,22 @@ case class VerificationReport(results: Vector[InvariantResult]):
 
   def report: String =
     val sb = new StringBuilder
-    sb.append("═══════════════════════════════════════════════════════════\n")
+    sb.append("===========================================================\n")
     sb.append("  VÉRIFICATION DES INVARIANTS MÉTIER\n")
-    sb.append("═══════════════════════════════════════════════════════════\n\n")
+    sb.append("===========================================================\n\n")
     results.foreach(r => sb.append(r.toString + "\n"))
     sb.append(s"\n  Résultat: $numSatisfied/${results.size} satisfaits")
     if allSatisfied then
-      sb.append(" — ✅ TOUS LES INVARIANTS SONT RESPECTÉS\n")
+      sb.append(" - TOUS LES INVARIANTS SONT RESPECTES\n")
     else
-      sb.append(s" — ❌ $numViolated VIOLATION(S) DÉTECTÉE(S)\n")
-    sb.append("═══════════════════════════════════════════════════════════\n")
+      sb.append(s" - $numViolated VIOLATION(S) DETECTEE(S)\n")
+    sb.append("===========================================================\n")
     sb.toString
 
 object InvariantChecker:
 
   import FCSPetriNet.*
 
-  /** Vérifie tous les invariants INV1-INV10 */
   def checkAll(net: PetriNet, stateSpace: StateSpaceResult): VerificationReport =
     val results = Vector(
       checkINV1(stateSpace),
@@ -60,12 +52,7 @@ object InvariantChecker:
     )
     VerificationReport(results)
 
-  // ── INV1 : Pas de tir sans verrouillage ──────────────────────────────
-  // M(P5) > 0 ⇒ le jeton est passé par P2
-  // Structurellement garanti par Pre(T4) qui exige P2
   def checkINV1(ss: StateSpaceResult): InvariantResult =
-    // On vérifie que P5 ne peut avoir de jeton que si T4 a été franchie,
-    // ce qui nécessitait P2. C'est structurel, mais on vérifie sur les arcs.
     val violation = ss.arcs.find { arc =>
       arc.to(P_ReadyToFire) > 0 && arc.transition.id == 4 && arc.from(P_TargetLocked) < 1
     }
@@ -77,7 +64,6 @@ object InvariantChecker:
       counterExample = violation.map(_.from)
     )
 
-  // ── INV2 : Pas de tir sans munition chargée ─────────────────────────
   def checkINV2(ss: StateSpaceResult): InvariantResult =
     val violation = ss.arcs.find { arc =>
       arc.to(P_ReadyToFire) > 0 && arc.transition.id == 4 && arc.from(P_AmmoLoaded) < 1
@@ -90,7 +76,6 @@ object InvariantChecker:
       counterExample = violation.map(_.from)
     )
 
-  // ── INV3 : Pas de tir sans autorisation ──────────────────────────────
   def checkINV3(ss: StateSpaceResult): InvariantResult =
     val violation = ss.arcs.find { arc =>
       arc.to(P_ReadyToFire) > 0 && arc.transition.id == 4 && arc.from(P_FireAuthorized) < 1
@@ -103,7 +88,6 @@ object InvariantChecker:
       counterExample = violation.map(_.from)
     )
 
-  // ── INV4 : Stock munitions ≥ 0 ──────────────────────────────────────
   def checkINV4(ss: StateSpaceResult): InvariantResult =
     val violation = ss.reachableMarkings.find(m => m(P_AmmoStock) < 0)
     InvariantResult(
@@ -114,7 +98,6 @@ object InvariantChecker:
       counterExample = violation
     )
 
-  // ── INV5 : Exclusion mutuelle tir/rechargement ──────────────────────
   def checkINV5(ss: StateSpaceResult): InvariantResult =
     val violation = ss.reachableMarkings.find(m =>
       m(P_Firing) > 0 && m(P_Reloading) > 0
@@ -127,7 +110,6 @@ object InvariantChecker:
       counterExample = violation
     )
 
-  // ── INV6 : Pas de tir pendant le cooldown ───────────────────────────
   def checkINV6(ss: StateSpaceResult): InvariantResult =
     val violation = ss.reachableMarkings.find(m =>
       m(P_Firing) > 0 && m(P_Cooldown) > 0
@@ -140,8 +122,6 @@ object InvariantChecker:
       counterExample = violation
     )
 
-  // ── INV7 : Conservation des jetons (hors P10, P11, P12) ─────────────
-  // M(P0)+M(P1)+...+M(P9) = constante
   def checkINV7(net: PetriNet, ss: StateSpaceResult): InvariantResult =
     val controlPlaces = (0 to 9).toVector
     val initialSum = controlPlaces.map(net.initialMarking(_)).sum
@@ -158,15 +138,8 @@ object InvariantChecker:
       details = s"Somme initiale P0..P9 = $initialSum"
     )
 
-  // ── INV8 : Tout tir est journalisé (vivacité) ──────────────────────
-  // G(◇(M(P6)>0) → ◇(M(P12)>0))
-  // Vérifié en s'assurant que chaque état avec P6>0 peut atteindre P12>0
   def checkINV8(net: PetriNet, ss: StateSpaceResult): InvariantResult =
-    // Simplifié : vérifie que quand on tire (P6>0), un jeton arrive en P11,
-    // et que T11 est toujours franchissable quand P11>0
     val firingStates = ss.reachableMarkings.filter(_(P_Firing) > 0)
-    // Quand T5 fire, il produit un jeton dans P11, donc ok
-    // Il faut que T11 puisse toujours être franchie
     val kafkaBlocked = ss.reachableMarkings.find { m =>
       m(P_KafkaQueue) > 0 && !net.transitions(11).isEnabled(m)
     }
@@ -179,13 +152,9 @@ object InvariantChecker:
       details = s"${firingStates.size} états de tir vérifiés"
     )
 
-  // ── INV9 : Retour à l'état initial (vivacité) ──────────────────────
-  // G(◇(M(P0) > 0)) — vérifié via l'absence de composantes puits
   def checkINV9(net: PetriNet, ss: StateSpaceResult): InvariantResult =
     val idleStates = ss.reachableMarkings.filter(_(P_Idle) > 0)
-    // On vérifie que depuis tout état non-deadlock, on peut atteindre Idle
     val nonDeadlocks = ss.reachableMarkings -- ss.deadlocks
-    // Heuristique : vérifier que P0 apparaît dans les marquages atteignables
     InvariantResult(
       id = "INV9",
       description = "Retour à l'état initial",
@@ -194,7 +163,6 @@ object InvariantChecker:
       details = s"${idleStates.size} états avec P0>0 sur ${ss.numStates} états"
     )
 
-  // ── INV10 : Absence de deadlock ─────────────────────────────────────
   def checkINV10(ss: StateSpaceResult): InvariantResult =
     InvariantResult(
       id = "INV10",
@@ -205,28 +173,17 @@ object InvariantChecker:
       details = s"${ss.numDeadlocks} deadlock(s) trouvé(s)"
     )
 
-  // ── P-Invariants ────────────────────────────────────────────────────
-  /** Calcule les P-invariants : vecteurs x tels que Cᵀ·x = 0
-    * Utilise l'élimination de Fourier-Motzkin simplifiée
-    */
   def computePInvariants(net: PetriNet): Vector[Vector[Int]] =
     val incidence = net.incidenceMatrix
-    // Chaque colonne de la matrice d'incidence transposée
-    // Un P-invariant x satisfait : pour chaque transition t, sum(x(p) * C(t,p)) = 0
-    // On cherche des solutions non-négatives par force brute pour les petits réseaux
     findInvariants(incidence, net.numPlaces)
 
-  /** Calcule les T-invariants : vecteurs y tels que C·y = 0 */
   def computeTInvariants(net: PetriNet): Vector[Vector[Int]] =
     val incidence = net.incidenceMatrix
-    // Transposer le problème : chercher y tel que pour chaque place p,
-    // sum(y(t) * C(t,p)) = 0
     val transposed = (0 until net.numPlaces).map { p =>
       Marking(incidence.map(row => row.tokens(p)))
     }.toVector
     findInvariants(transposed.map(m => Marking(m.tokens)), net.numTransitions)
 
-  /** Recherche d'invariants par exploration bornée (brute force pour petits réseaux) */
   private def findInvariants(
       matrix: Vector[Marking],
       dim: Int,
@@ -239,7 +196,6 @@ object InvariantChecker:
         candidate.zip(row.tokens).map((c, v) => c * v).sum == 0
       }
 
-    // Exploration bornée des candidats non-triviaux
     def explore(pos: Int, current: Vector[Int]): Unit =
       if pos == dim then
         if current.exists(_ != 0) && check(current) then
@@ -248,7 +204,7 @@ object InvariantChecker:
         for coeff <- 0 to maxCoeff do
           explore(pos + 1, current :+ coeff)
 
-    if dim <= 15 then // seulement pour les petits réseaux
+    if dim <= 15 then
       explore(0, Vector.empty)
 
     result.toVector

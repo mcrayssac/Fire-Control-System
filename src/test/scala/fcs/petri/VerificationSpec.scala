@@ -5,11 +5,8 @@ import org.scalatest.matchers.should.Matchers
 
 class VerificationSpec extends AnyFunSuite with Matchers:
 
-  // Utiliser un stock petit pour garder l'espace d'états explorable
   val net: PetriNet = FCSPetriNet.buildWithReadArc(initialAmmo = 2)
   val stateSpace: StateSpaceResult = StateSpaceAnalyzer.explore(net)
-
-  // ── Espace d'états ─────────────────────────────────────────────────
 
   test("State space exploration terminates"):
     stateSpace.numStates should be > 0
@@ -23,8 +20,6 @@ class VerificationSpec extends AnyFunSuite with Matchers:
     val firingStates = stateSpace.reachableMarkings.filter(_(FCSPetriNet.P_Firing) > 0)
     firingStates should not be empty
     info(s"Firing states found: ${firingStates.size}")
-
-  // ── Invariants INV1-INV10 ──────────────────────────────────────────
 
   test("INV1: No fire without target lock"):
     val report = InvariantChecker.checkAll(net, stateSpace)
@@ -54,8 +49,6 @@ class VerificationSpec extends AnyFunSuite with Matchers:
     val report = InvariantChecker.checkAll(net, stateSpace)
     report.results.find(_.id == "INV8").get.satisfied shouldBe true
 
-  // ── LTL Properties ─────────────────────────────────────────────────
-
   test("LTL: G(¬(firing ∧ reloading))"):
     val results = LTLVerifier.verifyAll(net, stateSpace)
     results.find(_.formula.contains("firing ∧ reloading")).get.satisfied shouldBe true
@@ -67,8 +60,6 @@ class VerificationSpec extends AnyFunSuite with Matchers:
   test("LTL: G(cooldown → ¬firing)"):
     val results = LTLVerifier.verifyAll(net, stateSpace)
     results.find(_.formula.contains("cooldown")).get.satisfied shouldBe true
-
-  // ── Recherche de chemin ────────────────────────────────────────────
 
   test("Path to firing state exists"):
     val path = StateSpaceAnalyzer.findPath(
@@ -86,17 +77,13 @@ class VerificationSpec extends AnyFunSuite with Matchers:
     )
     path shouldBe None
 
-  // ── Ammo exhaustion ────────────────────────────────────────────────
-
   test("System handles ammo exhaustion gracefully"):
     val smallNet = FCSPetriNet.buildWithReadArc(initialAmmo = 1)
     val smallSS = StateSpaceAnalyzer.explore(smallNet)
 
-    // T2 should be blocked when ammo is 0
     val noAmmoStates = smallSS.reachableMarkings.filter(_(FCSPetriNet.P_AmmoStock) == 0)
     noAmmoStates should not be empty
 
-    // None of these states should have a negative stock
     noAmmoStates.foreach { m =>
       m(FCSPetriNet.P_AmmoStock) should be >= 0
     }

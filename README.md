@@ -1,4 +1,4 @@
-# 🎯 Fire Control System (FCS) — Modélisation et Vérification
+# Fire Control System (FCS) — Modélisation et Vérification
 
 **Système de Contrôle de Tir pour Véhicule Blindé**
 
@@ -6,7 +6,7 @@
 
 ---
 
-## 📋 Description
+## Description
 
 Ce projet implémente un **système de contrôle de tir (Fire Control System)** pour un véhicule blindé de type tank. Il combine :
 
@@ -15,7 +15,7 @@ Ce projet implémente un **système de contrôle de tir (Fire Control System)** 
 - **Vérification formelle** : invariants métier (INV1-INV10) et propriétés LTL
 - **Simulation comparée** entre le modèle formel et l'implémentation réelle
 
-## 🏗️ Architecture
+## Architecture
 
 ### Acteurs Akka
 
@@ -60,7 +60,7 @@ Erreurs :        Px → T9 → P9(Error) → T10 → P0
 | `fcs.error.critical` | Erreurs critiques |
 | `fcs.audit.log` | Audit trail consolidé |
 
-## 🔬 Vérification Formelle
+## Verification Formelle
 
 ### Invariants métier (INV1-INV10)
 
@@ -88,7 +88,7 @@ Erreurs :        Px → T9 → P9(Error) → T10 → P0
 | `G(¬(ammo < 0))` | Stock jamais négatif |
 | `G(cooldown → ¬firing)` | Pas de tir pendant le cooldown |
 
-## 🚀 Utilisation
+## Utilisation
 
 ### Prérequis
 
@@ -125,7 +125,7 @@ sbt "run simulate"
 sbt "run compare"
 ```
 
-## 📁 Structure du projet
+## Structure du projet
 
 ```
 fire-control-system/
@@ -166,7 +166,7 @@ fire-control-system/
     └── fcs_petri_net.drawio           # Diagramme du réseau de Pétri
 ```
 
-## 🛠️ Stack Technique
+## Stack Technique
 
 | Composant | Technologie |
 |-----------|-------------|
@@ -179,7 +179,7 @@ fire-control-system/
 | CI/CD | GitHub Actions |
 | Sérialisation | Circe (JSON) |
 
-## 📊 Scénarios de test
+## Scenarios de test
 
 1. **Nominal** — Cycle complet détection → tir → rechargement
 2. **Tir sans autorisation** — Doit être refusé (ROE non validées)
@@ -188,6 +188,6 @@ fire-control-system/
 5. **Détections concurrentes** — Un seul cycle à la fois (exclusion mutuelle)
 6. **Kafka offline** — La boucle de tir critique continue
 
-## 📄 Licence
+## Licence
 
 Projet académique — 2026

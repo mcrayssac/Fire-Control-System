@@ -4,48 +4,32 @@ import akka.actor.typed.ActorRef
 import java.time.Instant
 import java.util.UUID
 
-// =============================================================================
-// Messages du protocole FCS
-// Définit tous les messages échangés entre acteurs du système
-//
-// NOTE: Les traits sont non-sealed car étendus depuis fcs.actors.*
-// Les objets de protocole sont suffixés "Protocol" pour éviter les
-// collisions de noms avec les acteurs dans fcs.actors
-// =============================================================================
 
-/** Trait racine pour tous les messages du système FCS */
 trait FCSMessage extends Serializable
 
-/** Identifiant unique pour un cycle de tir */
 case class FireCycleId(value: String = UUID.randomUUID().toString)
 
-/** Coordonnées d'une cible détectée */
 case class TargetCoordinates(
     x: Double,
     y: Double,
     z: Double,
-    bearing: Double,  // azimut en degrés
-    range: Double     // distance en mètres
+    bearing: Double,
+    range: Double
 )
 
-/** Solution de tir balistique calculée */
 case class BallisticSolution(
-    elevation: Double,    // angle d'élévation
-    windage: Double,      // correction vent
-    timeOfFlight: Double, // temps de vol en secondes
-    confidence: Double    // niveau de confiance [0,1]
+    elevation: Double,
+    windage: Double,
+    timeOfFlight: Double,
+    confidence: Double
 )
 
-/** Type de munition */
 enum AmmoType:
-  case APFSDS  // Armor-Piercing Fin-Stabilized Discarding Sabot
-  case HEAT    // High-Explosive Anti-Tank
-  case HESH    // High-Explosive Squash Head
-  case HE      // High-Explosive
+  case APFSDS
+  case HEAT
+  case HESH
+  case HE
 
-// =============================================================================
-// Messages du SensorActor
-// =============================================================================
 object SensorProtocol:
   trait Command extends FCSMessage
   case object StartScanning extends Command
@@ -59,9 +43,6 @@ object SensorProtocol:
       timestamp: Instant = Instant.now()
   ) extends Event
 
-// =============================================================================
-// Messages du TrackingActor
-// =============================================================================
 object TrackingProtocol:
   trait Command extends FCSMessage
   case class TrackTarget(
@@ -83,9 +64,6 @@ object TrackingProtocol:
       timestamp: Instant = Instant.now()
   ) extends Event
 
-// =============================================================================
-// Messages du AmmoActor
-// =============================================================================
 object AmmoProtocol:
   trait Command extends FCSMessage
   case class LoadAmmo(
@@ -112,9 +90,6 @@ object AmmoProtocol:
       timestamp: Instant = Instant.now()
   ) extends Event
 
-// =============================================================================
-// Messages du CommandActor
-// =============================================================================
 object CommandProtocol:
   trait Command extends FCSMessage
   case class RequestAuthorization(
@@ -124,11 +99,10 @@ object CommandProtocol:
   ) extends Command
   case class RevokeAuthorization(cycleId: FireCycleId) extends Command
 
-  /** Règles d'engagement */
   case class ROE(
-      weaponsFree: Boolean = false,   // tir libre
-      maxRange: Double = 4000.0,      // portée max en mètres
-      minConfidence: Double = 0.8     // confiance min pour la solution de tir
+      weaponsFree: Boolean = false,
+      maxRange: Double = 4000.0,
+      minConfidence: Double = 0.8
   )
 
   trait Event extends FCSMessage
@@ -143,13 +117,9 @@ object CommandProtocol:
       timestamp: Instant = Instant.now()
   ) extends Event
 
-// =============================================================================
-// Messages du FireControlActor (Orchestrateur central)
-// =============================================================================
 object FireControlProtocol:
   trait Command extends FCSMessage
 
-  // Réponses des sous-acteurs
   case class TargetLockConfirmed(
       cycleId: FireCycleId,
       solution: BallisticSolution
@@ -170,7 +140,6 @@ object FireControlProtocol:
       reason: String
   ) extends Command
 
-  // Commandes du cycle de tir
   case class InitiateFireCycle(
       coordinates: TargetCoordinates,
       ammoType: AmmoType = AmmoType.APFSDS
@@ -179,7 +148,6 @@ object FireControlProtocol:
   case object ReloadComplete extends Command
   case object CooldownComplete extends Command
 
-  // Commandes internes (timers)
   case class CooldownTimeout(cycleId: FireCycleId) extends Command
   case class ReloadTimeout(cycleId: FireCycleId) extends Command
 
@@ -196,9 +164,6 @@ object FireControlProtocol:
       timestamp: Instant = Instant.now()
   ) extends Event
 
-// =============================================================================
-// Messages Kafka
-// =============================================================================
 object KafkaMessages:
   trait KafkaCommand extends FCSMessage
   case class PublishEvent(
@@ -216,9 +181,6 @@ object KafkaMessages:
       timestamp: Instant
   ) extends FCSMessage
 
-// =============================================================================
-// Messages du SupervisorActor
-// =============================================================================
 object SupervisorProtocol:
   trait Command extends FCSMessage
   case object StartSystem extends Command
@@ -230,7 +192,6 @@ object SupervisorProtocol:
   ) extends Command
   case class SimulateScenario(scenario: SimulationScenario) extends Command
 
-  /** Scénarios de simulation prédéfinis */
   enum SimulationScenario:
     case NominalFireCycle
     case FireWithoutAuthorization

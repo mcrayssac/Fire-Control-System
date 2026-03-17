@@ -7,11 +7,6 @@ import fcs.model.SensorProtocol.*
 import fcs.kafka.Topics
 import java.time.Instant
 
-// =============================================================================
-// SensorActor — Détection de cibles
-// Réseau de Pétri : transition T0 (detect_target), P0 → P1 + P11
-// =============================================================================
-
 object SensorActor:
 
   def apply(
@@ -27,7 +22,7 @@ object SensorActor:
     Behaviors.receive { (context, message) =>
       message match
         case StartScanning =>
-          context.log.info("🔍 SensorActor: Démarrage du scan radar/LIDAR")
+          context.log.info("SensorActor: Demarrage du scan radar/LIDAR")
           scanning(fireControl, kafkaProducer)
         case SimulateDetection(coords) =>
           processDetection(context, fireControl, kafkaProducer, coords)
@@ -60,8 +55,8 @@ object SensorActor:
   ): Unit =
     val cycleId = FireCycleId()
     context.log.info(
-      s"🎯 SensorActor: Cible détectée [${cycleId.value.take(8)}] " +
-        s"à bearing=${coords.bearing}°, range=${coords.range}m"
+      s"SensorActor: Cible detectee [${cycleId.value.take(8)}] " +
+        s"bearing=${coords.bearing}, range=${coords.range}m"
     )
     fireControl ! FireControlProtocol.InitiateFireCycle(coords)
     kafkaProducer ! KafkaMessages.PublishEvent(

@@ -2,20 +2,12 @@ package fcs.petri
 
 import scala.collection.mutable
 
-// =============================================================================
-// Analyseur d'espace d'états
-// Exploration exhaustive par BFS de tous les marquages atteignables depuis M₀
-// Détection de deadlocks et construction du graphe d'accessibilité
-// =============================================================================
-
-/** Arc du graphe d'accessibilité */
 case class StateArc(
     from: Marking,
     transition: Transition,
     to: Marking
 )
 
-/** Résultat de l'analyse de l'espace d'états */
 case class StateSpaceResult(
     reachableMarkings: Set[Marking],
     arcs: Vector[StateArc],
@@ -27,12 +19,11 @@ case class StateSpaceResult(
   def numDeadlocks: Int = deadlocks.size
   def hasDeadlocks: Boolean = deadlocks.nonEmpty
 
-  /** Produit un rapport textuel */
   def report(net: PetriNet): String =
     val sb = new StringBuilder
-    sb.append("═══════════════════════════════════════════════════════════\n")
+    sb.append("===========================================================\n")
     sb.append("  ANALYSE DE L'ESPACE D'ÉTATS\n")
-    sb.append("═══════════════════════════════════════════════════════════\n")
+    sb.append("===========================================================\n")
     sb.append(s"  Réseau       : ${net.numPlaces} places, ${net.numTransitions} transitions\n")
     sb.append(s"  Marquage M₀  : $initialMarking\n")
     sb.append(s"  États att.   : $numStates\n")
@@ -40,24 +31,18 @@ case class StateSpaceResult(
     sb.append(s"  Deadlocks    : $numDeadlocks\n")
 
     if hasDeadlocks then
-      sb.append("\n  ⚠️  DEADLOCKS DÉTECTÉS :\n")
+      sb.append("\n  DEADLOCKS DETECTES :\n")
       deadlocks.foreach { m =>
         sb.append(s"    • $m\n")
       }
     else
-      sb.append("\n  ✅ Aucun deadlock détecté\n")
+      sb.append("\n  Aucun deadlock detecte\n")
 
-    sb.append("═══════════════════════════════════════════════════════════\n")
+    sb.append("===========================================================\n")
     sb.toString
 
 object StateSpaceAnalyzer:
 
-  /** Explore l'espace d'états par BFS depuis le marquage initial.
-    *
-    * @param net       Le réseau de Pétri
-    * @param maxStates Limite de sécurité pour éviter l'explosion combinatoire
-    * @return StateSpaceResult avec tous les marquages atteignables
-    */
   def explore(net: PetriNet, maxStates: Int = 100_000): StateSpaceResult =
     val visited = mutable.Set[Marking]()
     val queue   = mutable.Queue[Marking]()
@@ -82,7 +67,7 @@ object StateSpaceAnalyzer:
             if !visited.contains(next) then
               visited.add(next)
               queue.enqueue(next)
-          case _ => // transition non franchissable ou marquage invalide
+          case _ =>
     end while
 
     StateSpaceResult(
@@ -92,7 +77,6 @@ object StateSpaceAnalyzer:
       initialMarking = m0
     )
 
-  /** Recherche un marquage satisfaisant un prédicat (DFS) */
   def findMarking(
       net: PetriNet,
       predicate: Marking => Boolean,
@@ -117,9 +101,6 @@ object StateSpaceAnalyzer:
 
     None
 
-  /** Calcule toutes les séquences de tir (chemins) depuis M₀ jusqu'à
-    * un marquage cible. Limité en profondeur pour éviter les boucles.
-    */
   def findPath(
       net: PetriNet,
       target: Marking => Boolean,

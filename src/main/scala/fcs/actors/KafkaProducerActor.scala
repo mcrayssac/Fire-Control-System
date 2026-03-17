@@ -4,19 +4,14 @@ import akka.actor.typed.Behavior
 import akka.actor.typed.scaladsl.{ActorContext, Behaviors}
 import fcs.model.KafkaMessages
 
-// =============================================================================
-// KafkaProducerActor — Publication des événements sur Kafka
-// Réseau de Pétri : alimente P11 (Kafka_Queue)
-// =============================================================================
-
 object KafkaProducerActor:
 
   def apply(enableKafka: Boolean = false): Behavior[KafkaMessages.KafkaCommand] =
     Behaviors.setup { context =>
       if enableKafka then
-        context.log.info("📡 KafkaProducer: Mode KAFKA activé")
+        context.log.info("KafkaProducer: Mode KAFKA active")
       else
-        context.log.info("📡 KafkaProducer: Mode SIMULATION (log only)")
+        context.log.info("KafkaProducer: Mode SIMULATION (log only)")
       ready(context, enableKafka)
     }
 
@@ -26,6 +21,6 @@ object KafkaProducerActor:
   ): Behavior[KafkaMessages.KafkaCommand] =
     Behaviors.receiveMessage {
       case KafkaMessages.PublishEvent(topic, key, payload, _) =>
-        context.log.info(s"  📨 [Kafka:$topic] key=${key.take(8)} | ${payload.take(80)}...")
+        context.log.info(s"  [Kafka:$topic] key=${key.take(8)} | ${payload.take(80)}...")
         Behaviors.same
     }

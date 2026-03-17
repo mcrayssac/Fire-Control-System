@@ -7,10 +7,6 @@ import fcs.petri.*
 
 import scala.io.StdIn
 
-// =============================================================================
-// Fire Control System — Point d'entrée principal
-// =============================================================================
-
 object Main:
 
   def main(args: Array[String]): Unit =
@@ -29,9 +25,7 @@ object Main:
 
   def runVerification(): Unit =
     println()
-    println("╔═══════════════════════════════════════════════════════════╗")
-    println("║    FIRE CONTROL SYSTEM — Vérification Formelle          ║")
-    println("╚═══════════════════════════════════════════════════════════╝")
+    println("FIRE CONTROL SYSTEM - Verification Formelle")
     println()
 
     val net = FCSPetriNet.buildWithReadArc(initialAmmo = 3)
@@ -39,7 +33,7 @@ object Main:
     println(s"Marquage initial : ${net.initialMarking}")
     println()
 
-    println("── Matrice d'incidence (extrait) ──")
+    println("-- Matrice d'incidence (extrait) --")
     net.transitions.foreach { t =>
       val inc = t.incidence.tokens.zipWithIndex
         .filter((v, _) => v != 0)
@@ -49,7 +43,7 @@ object Main:
     }
     println()
 
-    println("── Exploration de l'espace d'états (BFS) ──")
+    println("-- Exploration de l'espace d'etats (BFS) --")
     val stateSpace = StateSpaceAnalyzer.explore(net)
     println(stateSpace.report(net))
 
@@ -59,20 +53,18 @@ object Main:
     val ltlResults = LTLVerifier.verifyAll(net, stateSpace)
     println(LTLVerifier.report(ltlResults))
 
-    println("── Chemin : cycle de tir nominal ──")
+    println("-- Chemin : cycle de tir nominal --")
     StateSpaceAnalyzer.findPath(net, m => m(FCSPetriNet.P_Firing) > 0) match
       case Some(path) =>
         println(s"  Séquence de transitions (${path.size} pas) :")
         path.foreach(t => println(s"    → ${t.name}"))
       case None =>
-        println("  ⚠️  Aucun chemin trouvé vers l'état Firing")
+        println("  Aucun chemin trouve vers l'etat Firing")
     println()
 
   def runAkkaSimulation(): Unit =
     println()
-    println("╔═══════════════════════════════════════════════════════════╗")
-    println("║    FIRE CONTROL SYSTEM — Simulation Akka                ║")
-    println("╚═══════════════════════════════════════════════════════════╝")
+    println("FIRE CONTROL SYSTEM - Simulation Akka")
     println()
     val system = ActorSystem(SupervisorActor(), "fcs-system")
     system ! StartSystem
@@ -84,13 +76,11 @@ object Main:
 
   def runComparison(): Unit =
     println()
-    println("╔═══════════════════════════════════════════════════════════╗")
-    println("║    FIRE CONTROL SYSTEM — Simulation Comparée            ║")
-    println("╚═══════════════════════════════════════════════════════════╝")
+    println("FIRE CONTROL SYSTEM - Simulation Comparee")
     println()
 
     val net = FCSPetriNet.buildWithReadArc(initialAmmo = 3)
-    println("── Simulation formelle (Réseau de Pétri) ──")
+    println("-- Simulation formelle (Reseau de Petri) --")
     println(s"  M₀ = ${net.initialMarking}")
 
     val nominalSequence = Vector(0, 1, 2, 3, 4, 5, 6, 7, 8)
@@ -104,9 +94,8 @@ object Main:
           println(f"  Étape $step%2d : ${t.name}%-20s → $next")
           currentMarking = next
         case None =>
-          println(f"  Étape ${step + 1}%2d : ${t.name}%-20s → ⚠️ NON FRANCHISSABLE")
+          println(f"  Etape ${step + 1}%2d : ${t.name}%-20s -> NON FRANCHISSABLE")
 
-    // T11 kafka_log
     net.transitions(11).fire(currentMarking).foreach { next =>
       step += 1
       println(f"  Étape $step%2d : kafka_log             → $next")
@@ -115,7 +104,7 @@ object Main:
     println(s"\n  Marquage final : $currentMarking")
     println()
 
-    println("── Simulation Akka ──")
+    println("-- Simulation Akka --")
     val system = ActorSystem(SupervisorActor(), "fcs-compare")
     system ! StartSystem
     Thread.sleep(500)
@@ -123,6 +112,4 @@ object Main:
     Thread.sleep(5000)
     system.terminate()
     println()
-    println("══════════════════════════════════════════════════════════════")
-    println("  Comparer les logs Akka avec la séquence formelle ci-dessus")
-    println("══════════════════════════════════════════════════════════════")
+    println("Comparer les logs Akka avec la sequence formelle ci-dessus")

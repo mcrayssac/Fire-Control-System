@@ -6,14 +6,7 @@ import fcs.model.*
 import fcs.model.TrackingProtocol.*
 import scala.concurrent.duration.*
 
-// =============================================================================
-// TrackingActor — Verrouillage de cible
-// Réseau de Pétri : transition T1 (lock_target), P1 → P2
-// =============================================================================
-
 object TrackingActor:
-
-  // Commande interne (timer) — définie ici car TrackingProtocol.Command n'est pas sealed
   private case class TrackingTimeout(cycleId: FireCycleId) extends TrackingProtocol.Command
   private val TrackingTimeoutDuration = 5.seconds
 
@@ -31,11 +24,11 @@ object TrackingActor:
     Behaviors.receive { (context, message) =>
       message match
         case TrackTarget(cycleId, coordinates, replyTo) =>
-          context.log.info(s"🔒 TrackingActor: Verrouillage cible [${cycleId.value.take(8)}]...")
+          context.log.info(s"TrackingActor: Verrouillage cible [${cycleId.value.take(8)}]...")
           val solution = computeBallisticSolution(coordinates)
           if solution.confidence >= 0.5 then
             context.log.info(
-              s"✅ TrackingActor: Cible verrouillée [${cycleId.value.take(8)}] confiance=${solution.confidence}"
+              s"TrackingActor: Cible verrouillee [${cycleId.value.take(8)}] confiance=${solution.confidence}"
             )
             replyTo ! FireControlProtocol.TargetLockConfirmed(cycleId, solution)
             kafkaProducer ! KafkaMessages.PublishEvent(
@@ -46,7 +39,7 @@ object TrackingActor:
             timers.startSingleTimer(cycleId.value, TrackingTimeout(cycleId), TrackingTimeoutDuration)
             tracking(kafkaProducer, timers, cycleId, solution)
           else
-            context.log.warn(s"❌ TrackingActor: Verrouillage échoué [${cycleId.value.take(8)}]")
+            context.log.warn(s"TrackingActor: Verrouillage echoue [${cycleId.value.take(8)}]")
             replyTo ! FireControlProtocol.TargetLockFailed(cycleId, "Confiance insuffisante")
             Behaviors.same
         case LoseTrack(_) => Behaviors.same
@@ -63,7 +56,7 @@ object TrackingActor:
     Behaviors.receive { (context, message) =>
       message match
         case LoseTrack(cycleId) if cycleId == currentCycleId =>
-          context.log.warn(s"⚠️ TrackingActor: Perte de verrouillage [${cycleId.value.take(8)}]")
+          context.log.warn(s"TrackingActor: Perte de verrouillage [${cycleId.value.take(8)}]")
           timers.cancel(cycleId.value)
           idle(kafkaProducer, timers)
         case TrackingTimeout(cycleId) if cycleId == currentCycleId =>

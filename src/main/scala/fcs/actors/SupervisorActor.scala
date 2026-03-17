@@ -8,11 +8,6 @@ import fcs.kafka.Topics
 import java.time.Instant
 import scala.concurrent.duration.*
 
-// =============================================================================
-// SupervisorActor — Superviseur racine du système FCS
-// Réseau de Pétri : T9 (error_detected) Px → P9, T10 (error_recovery) P9 → P0
-// =============================================================================
-
 object SupervisorActor:
 
   case class ActorRefs(
@@ -27,11 +22,9 @@ object SupervisorActor:
 
   def apply(): Behavior[SupervisorProtocol.Command] =
     Behaviors.setup { context =>
-      context.log.info("═══════════════════════════════════════════════")
-      context.log.info("  Fire Control System (FCS) — Démarrage")
-      context.log.info("═══════════════════════════════════════════════")
+      context.log.info("Fire Control System (FCS) - Demarrage")
       val refs = spawnActors(context)
-      context.log.info("✅ Tous les acteurs créés et supervisés")
+      context.log.info("Tous les acteurs crees et supervises")
       running(refs)
     }
 
@@ -77,19 +70,19 @@ object SupervisorActor:
     Behaviors.receive { (context, message) =>
       message match
         case StartSystem =>
-          context.log.info("🚀 FCS: Système démarré — prêt au combat")
+          context.log.info("FCS: Systeme demarre")
           refs.sensor ! SensorProtocol.StartScanning
           refs.kafkaConsumer ! KafkaConsumerActor.StartConsuming
           Behaviors.same
 
         case StopSystem =>
-          context.log.info("🛑 FCS: Arrêt du système")
+          context.log.info("FCS: Arret du systeme")
           refs.sensor ! SensorProtocol.StopScanning
           refs.kafkaConsumer ! KafkaConsumerActor.StopConsuming
           Behaviors.stopped
 
         case ReportError(source, error, timestamp) =>
-          context.log.error(s"🚨 FCS: Erreur critique depuis $source — ${error.getMessage}")
+          context.log.error(s"FCS: Erreur critique depuis $source - ${error.getMessage}")
           refs.kafkaProducer ! KafkaMessages.PublishEvent(
             topic = Topics.ErrorCritical, key = source,
             payload = s"""{"source":"$source","error":"${error.getMessage}","timestamp":"$timestamp"}"""
@@ -109,31 +102,31 @@ object SupervisorActor:
     import SimulationScenario.*
     scenario match
       case NominalFireCycle =>
-        context.log.info("📋 Scénario: Cycle de tir nominal")
+        context.log.info("Scenario: Cycle de tir nominal")
         refs.sensor ! SensorProtocol.SimulateDetection(
           TargetCoordinates(1500, 200, 0, bearing = 45.0, range = 2000.0)
         )
       case FireWithoutAuthorization =>
-        context.log.info("📋 Scénario: Tir sans autorisation (doit être refusé)")
+        context.log.info("Scenario: Tir sans autorisation (doit être refusé)")
         refs.sensor ! SensorProtocol.SimulateDetection(
           TargetCoordinates(5000, 0, 0, bearing = 180.0, range = 4500.0)
         )
       case AmmoExhausted =>
-        context.log.info("📋 Scénario: Stock épuisé")
+        context.log.info("Scenario: Stock épuisé")
         (1 to 12).foreach { i =>
           refs.sensor ! SensorProtocol.SimulateDetection(
             TargetCoordinates(1000.0 + i * 100, 0, 0, bearing = 30.0 + i * 5, range = 1500.0)
           )
         }
       case ErrorDuringTracking =>
-        context.log.info("📋 Scénario: Erreur pendant le verrouillage")
+        context.log.info("Scenario: Erreur pendant le verrouillage")
         context.self ! ReportError("tracking", new RuntimeException("Capteur gyroscopique défaillant"))
       case ConcurrentDetections =>
-        context.log.info("📋 Scénario: Détections concurrentes")
+        context.log.info("Scenario: Détections concurrentes")
         refs.sensor ! SensorProtocol.SimulateDetection(TargetCoordinates(100, 0, 0, 10.0, 1000.0))
         refs.sensor ! SensorProtocol.SimulateDetection(TargetCoordinates(200, 0, 0, 20.0, 1500.0))
       case KafkaOffline =>
-        context.log.info("📋 Scénario: Kafka offline")
+        context.log.info("Scenario: Kafka offline")
         refs.sensor ! SensorProtocol.SimulateDetection(
           TargetCoordinates(1000, 0, 0, 45.0, 2000.0)
         )

@@ -4,21 +4,11 @@ import org.apache.kafka.clients.producer.ProducerConfig
 import org.apache.kafka.clients.consumer.ConsumerConfig
 import java.util.Properties
 
-// =============================================================================
-// Configuration Kafka pour le FCS
-// Garanties critiques : acks=all, idempotence, read_committed
-//
-// NOTE: Utilise les Properties Kafka natifs (java client).
-// L'intégration Alpakka Kafka (akka-stream-kafka) sera ajoutée
-// quand un broker réel sera configuré.
-// =============================================================================
-
 object KafkaConfig:
 
   val DefaultBootstrapServers = "localhost:9092"
   val ConsumerGroup           = "fcs-consumer-group"
 
-  /** Configuration producteur avec garanties critiques */
   def producerProperties: Properties =
     val props = new Properties()
     props.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, DefaultBootstrapServers)
@@ -32,7 +22,6 @@ object KafkaConfig:
     props.put(ProducerConfig.MAX_IN_FLIGHT_REQUESTS_PER_CONNECTION, "1")
     props
 
-  /** Configuration consommateur avec garanties critiques */
   def consumerProperties: Properties =
     val props = new Properties()
     props.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, DefaultBootstrapServers)
