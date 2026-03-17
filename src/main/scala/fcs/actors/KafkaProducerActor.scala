@@ -12,12 +12,11 @@ object KafkaProducerActor:
         context.log.info("KafkaProducer: Mode KAFKA active")
       else
         context.log.info("KafkaProducer: Mode SIMULATION (log only)")
-      ready(context, enableKafka)
+      ready(context)
     }
 
   private def ready(
-      context: ActorContext[KafkaMessages.KafkaCommand],
-      enableKafka: Boolean
+      context: ActorContext[KafkaMessages.KafkaCommand]
   ): Behavior[KafkaMessages.KafkaCommand] =
     Behaviors.receiveMessage {
       case KafkaMessages.PublishEvent(topic, key, payload, _) =>

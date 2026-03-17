@@ -19,6 +19,12 @@ case class StateSpaceResult(
   def numDeadlocks: Int = deadlocks.size
   def hasDeadlocks: Boolean = deadlocks.nonEmpty
 
+  lazy val successorMap: Map[Marking, Vector[Marking]] =
+    arcs.groupBy(_.from).map((k, v) => k -> v.map(_.to))
+
+  lazy val predecessorMap: Map[Marking, Vector[Marking]] =
+    arcs.groupBy(_.to).map((k, v) => k -> v.map(_.from))
+
   def report(net: PetriNet): String =
     val sb = new StringBuilder
     sb.append("===========================================================\n")

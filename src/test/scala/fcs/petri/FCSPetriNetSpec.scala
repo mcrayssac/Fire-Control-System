@@ -7,7 +7,7 @@ class FCSPetriNetSpec extends AnyFunSuite with Matchers:
 
   import FCSPetriNet.*
 
-  val net: PetriNet = FCSPetriNet.buildWithReadArc(initialAmmo = 3)
+  val net: PetriNet = FCSPetriNet.build(initialAmmo = 3)
 
   test("FCS network has 13 places and 12 transitions"):
     net.numPlaces shouldBe 13
@@ -20,7 +20,7 @@ class FCSPetriNetSpec extends AnyFunSuite with Matchers:
       net.initialMarking(i) shouldBe 0
     }
 
-  test("Nominal fire cycle: T0 → T1 → T2 → T3 → T4 → T5 → T6 → T7 + T8"):
+  test("Nominal fire cycle: T0 → T1 → T2 → T3 → T4 → T5 → T6 → T7 → T8"):
     var m = net.initialMarking
 
     val afterT0 = net.transitions(0).fire(m)
@@ -45,13 +45,12 @@ class FCSPetriNetSpec extends AnyFunSuite with Matchers:
     afterT3 shouldBe defined
     m = afterT3.get
     m(P_FireAuthorized) shouldBe 1
-    m(P_TargetLocked) shouldBe 1
+    m(P_TargetLocked) shouldBe 0
 
     val afterT4 = net.transitions(4).fire(m)
     afterT4 shouldBe defined
     m = afterT4.get
     m(P_ReadyToFire) shouldBe 1
-    m(P_TargetLocked) shouldBe 0
     m(P_AmmoLoaded) shouldBe 0
     m(P_FireAuthorized) shouldBe 0
 
@@ -65,28 +64,28 @@ class FCSPetriNetSpec extends AnyFunSuite with Matchers:
     afterT6 shouldBe defined
     m = afterT6.get
     m(P_Reloading) shouldBe 1
-    m(P_Cooldown) shouldBe 1
+    m(P_Cooldown) shouldBe 0
 
     val afterT7 = net.transitions(7).fire(m)
     afterT7 shouldBe defined
     m = afterT7.get
-    m(P_Idle) shouldBe 1
     m(P_Reloading) shouldBe 0
+    m(P_Cooldown) shouldBe 1
 
     val afterT8 = net.transitions(8).fire(m)
     afterT8 shouldBe defined
     m = afterT8.get
-    m(P_Idle) shouldBe 2
+    m(P_Idle) shouldBe 1
     m(P_Cooldown) shouldBe 0
 
-  test("T4 (sync) is not enabled without all 3 preconditions"):
+  test("T4 (sync) is not enabled without preconditions"):
     var m = net.initialMarking
     m = net.transitions(0).fire(m).get
     m = net.transitions(1).fire(m).get
     net.transitions(4).isEnabled(m) shouldBe false
 
   test("T2 (load_ammo) is blocked when ammo stock is empty"):
-    val emptyNet = FCSPetriNet.buildWithReadArc(initialAmmo = 0)
+    val emptyNet = FCSPetriNet.build(initialAmmo = 0)
     emptyNet.transitions(2).isEnabled(emptyNet.initialMarking) shouldBe false
 
   test("T5 (fire) is not directly enabled from initial marking"):

@@ -1,7 +1,7 @@
 package fcs.actors
 
 import akka.actor.typed.{ActorRef, Behavior}
-import akka.actor.typed.scaladsl.{ActorContext, Behaviors}
+import akka.actor.typed.scaladsl.Behaviors
 import fcs.model.*
 import fcs.model.CommandProtocol.*
 import fcs.kafka.Topics
@@ -22,7 +22,7 @@ object CommandActor:
     Behaviors.receive { (context, message) =>
       message match
         case RequestAuthorization(cycleId, solution, replyTo) =>
-          validateROE(context, roe, solution) match
+          validateROE(roe, solution) match
             case Right(_) =>
               context.log.info(s"CommandActor: Tir AUTORISE [${cycleId.value.take(8)}]")
               replyTo ! FireControlProtocol.FireAuthConfirmed(cycleId)
@@ -40,7 +40,6 @@ object CommandActor:
     }
 
   private def validateROE(
-      context: ActorContext[CommandProtocol.Command],
       roe: ROE,
       solution: BallisticSolution
   ): Either[String, Unit] =

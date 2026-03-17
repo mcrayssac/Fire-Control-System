@@ -5,8 +5,10 @@ import org.scalatest.matchers.should.Matchers
 
 class VerificationSpec extends AnyFunSuite with Matchers:
 
-  val net: PetriNet = FCSPetriNet.buildWithReadArc(initialAmmo = 2)
+  val net: PetriNet = FCSPetriNet.build(initialAmmo = 2)
   val stateSpace: StateSpaceResult = StateSpaceAnalyzer.explore(net)
+  lazy val invReport: VerificationReport = InvariantChecker.checkAll(net, stateSpace)
+  lazy val ltlResults: Vector[LTLResult] = LTLVerifier.verifyAll(net, stateSpace)
 
   test("State space exploration terminates"):
     stateSpace.numStates should be > 0
@@ -22,44 +24,34 @@ class VerificationSpec extends AnyFunSuite with Matchers:
     info(s"Firing states found: ${firingStates.size}")
 
   test("INV1: No fire without target lock"):
-    val report = InvariantChecker.checkAll(net, stateSpace)
-    report.results.find(_.id == "INV1").get.satisfied shouldBe true
+    invReport.results.find(_.id == "INV1").get.satisfied shouldBe true
 
   test("INV2: No fire without ammo loaded"):
-    val report = InvariantChecker.checkAll(net, stateSpace)
-    report.results.find(_.id == "INV2").get.satisfied shouldBe true
+    invReport.results.find(_.id == "INV2").get.satisfied shouldBe true
 
   test("INV3: No fire without authorization"):
-    val report = InvariantChecker.checkAll(net, stateSpace)
-    report.results.find(_.id == "INV3").get.satisfied shouldBe true
+    invReport.results.find(_.id == "INV3").get.satisfied shouldBe true
 
   test("INV4: Ammo stock never negative"):
-    val report = InvariantChecker.checkAll(net, stateSpace)
-    report.results.find(_.id == "INV4").get.satisfied shouldBe true
+    invReport.results.find(_.id == "INV4").get.satisfied shouldBe true
 
   test("INV5: Mutual exclusion firing/reloading"):
-    val report = InvariantChecker.checkAll(net, stateSpace)
-    report.results.find(_.id == "INV5").get.satisfied shouldBe true
+    invReport.results.find(_.id == "INV5").get.satisfied shouldBe true
 
   test("INV6: No firing during cooldown"):
-    val report = InvariantChecker.checkAll(net, stateSpace)
-    report.results.find(_.id == "INV6").get.satisfied shouldBe true
+    invReport.results.find(_.id == "INV6").get.satisfied shouldBe true
 
   test("INV8: Every fire event is logged"):
-    val report = InvariantChecker.checkAll(net, stateSpace)
-    report.results.find(_.id == "INV8").get.satisfied shouldBe true
+    invReport.results.find(_.id == "INV8").get.satisfied shouldBe true
 
   test("LTL: G(¬(firing ∧ reloading))"):
-    val results = LTLVerifier.verifyAll(net, stateSpace)
-    results.find(_.formula.contains("firing ∧ reloading")).get.satisfied shouldBe true
+    ltlResults.find(_.formula.contains("firing ∧ reloading")).get.satisfied shouldBe true
 
   test("LTL: G(¬(ammo < 0))"):
-    val results = LTLVerifier.verifyAll(net, stateSpace)
-    results.find(_.formula.contains("ammo")).get.satisfied shouldBe true
+    ltlResults.find(_.formula.contains("ammo")).get.satisfied shouldBe true
 
   test("LTL: G(cooldown → ¬firing)"):
-    val results = LTLVerifier.verifyAll(net, stateSpace)
-    results.find(_.formula.contains("cooldown")).get.satisfied shouldBe true
+    ltlResults.find(_.formula.contains("cooldown")).get.satisfied shouldBe true
 
   test("Path to firing state exists"):
     val path = StateSpaceAnalyzer.findPath(
@@ -78,7 +70,7 @@ class VerificationSpec extends AnyFunSuite with Matchers:
     path shouldBe None
 
   test("System handles ammo exhaustion gracefully"):
-    val smallNet = FCSPetriNet.buildWithReadArc(initialAmmo = 1)
+    val smallNet = FCSPetriNet.build(initialAmmo = 1)
     val smallSS = StateSpaceAnalyzer.explore(smallNet)
 
     val noAmmoStates = smallSS.reachableMarkings.filter(_(FCSPetriNet.P_AmmoStock) == 0)

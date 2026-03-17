@@ -87,6 +87,30 @@ object LTLVerifier:
     val description = describeFormula(formula)
 
     formula match
+      case Globally(Implies(f1, Finally(f2))) =>
+        val targetStates = ss.reachableMarkings.filter(m => evaluate(f2, m, net, ss))
+        val canReachTarget = backwardReachable(targetStates, ss)
+        val violating = ss.reachableMarkings.find(m =>
+          evaluate(f1, m, net, ss) && !canReachTarget.contains(m)
+        )
+        LTLResult(
+          formula = name,
+          satisfied = violating.isEmpty,
+          description = description,
+          counterExamplePath = violating.map(m => Vector(m))
+        )
+
+      case Globally(Finally(inner)) =>
+        val targetStates = ss.reachableMarkings.filter(m => evaluate(inner, m, net, ss))
+        val canReachTarget = backwardReachable(targetStates, ss)
+        val violating = ss.reachableMarkings.find(m => !canReachTarget.contains(m))
+        LTLResult(
+          formula = name,
+          satisfied = violating.isEmpty,
+          description = description,
+          counterExamplePath = violating.map(m => Vector(m))
+        )
+
       case Globally(inner) =>
         val violating = ss.reachableMarkings.find(m => !evaluate(inner, m, net, ss))
         LTLResult(
@@ -144,20 +168,34 @@ object LTLVerifier:
         evaluate(Finally(f2), marking, net, ss)
 
       case Next(f) =>
-        val successors = ss.arcs.filter(_.from == marking).map(_.to)
-        successors.forall(m => evaluate(f, m, net, ss))
+        ss.successorMap.getOrElse(marking, Vector.empty)
+          .forall(m => evaluate(f, m, net, ss))
+
+  private def backwardReachable(targets: Set[Marking], ss: StateSpaceResult): Set[Marking] =
+    val visited = mutable.Set.from(targets)
+    val queue   = mutable.Queue.from(targets)
+    val preds   = ss.predecessorMap
+
+    while queue.nonEmpty do
+      val current = queue.dequeue()
+      for prev <- preds.getOrElse(current, Vector.empty) do
+        if !visited.contains(prev) then
+          visited.add(prev)
+          queue.enqueue(prev)
+
+    visited.toSet
 
   private def reachableFrom(marking: Marking, ss: StateSpaceResult): Set[Marking] =
     val visited = mutable.Set[Marking]()
     val queue   = mutable.Queue[Marking]()
+    val succs   = ss.successorMap
 
     queue.enqueue(marking)
     visited.add(marking)
 
     while queue.nonEmpty do
       val current = queue.dequeue()
-      val successors = ss.arcs.filter(_.from == current).map(_.to)
-      for next <- successors do
+      for next <- succs.getOrElse(current, Vector.empty) do
         if !visited.contains(next) then
           visited.add(next)
           queue.enqueue(next)

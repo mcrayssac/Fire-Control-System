@@ -1,7 +1,7 @@
 package fcs.actors
 
 import akka.actor.typed.{ActorRef, Behavior}
-import akka.actor.typed.scaladsl.{ActorContext, Behaviors}
+import akka.actor.typed.scaladsl.Behaviors
 import fcs.model.*
 import fcs.model.AmmoProtocol.*
 import fcs.kafka.Topics

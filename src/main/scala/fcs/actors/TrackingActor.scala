@@ -1,7 +1,7 @@
 package fcs.actors
 
 import akka.actor.typed.{ActorRef, Behavior}
-import akka.actor.typed.scaladsl.{ActorContext, Behaviors, TimerScheduler}
+import akka.actor.typed.scaladsl.{Behaviors, TimerScheduler}
 import fcs.model.*
 import fcs.model.TrackingProtocol.*
 import scala.concurrent.duration.*
@@ -37,7 +37,7 @@ object TrackingActor:
               payload = s"""{"cycleId":"${cycleId.value}","elevation":${solution.elevation},"confidence":${solution.confidence}}"""
             )
             timers.startSingleTimer(cycleId.value, TrackingTimeout(cycleId), TrackingTimeoutDuration)
-            tracking(kafkaProducer, timers, cycleId, solution)
+            tracking(kafkaProducer, timers, cycleId)
           else
             context.log.warn(s"TrackingActor: Verrouillage echoue [${cycleId.value.take(8)}]")
             replyTo ! FireControlProtocol.TargetLockFailed(cycleId, "Confiance insuffisante")
@@ -50,8 +50,7 @@ object TrackingActor:
   private def tracking(
       kafkaProducer: ActorRef[KafkaMessages.KafkaCommand],
       timers: TimerScheduler[TrackingProtocol.Command],
-      currentCycleId: FireCycleId,
-      solution: BallisticSolution
+      currentCycleId: FireCycleId
   ): Behavior[TrackingProtocol.Command] =
     Behaviors.receive { (context, message) =>
       message match

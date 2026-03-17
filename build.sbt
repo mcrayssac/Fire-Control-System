@@ -1,4 +1,7 @@
 ThisBuild / version      := "0.1.0-SNAPSHOT"
+// Scala 3.3.x émet un warning JVM "sun.misc.Unsafe::objectFieldOffset" sur JDK 21+.
+// C'est un bug connu de scala.runtime.LazyVals$ corrigé en Scala 3.4+.
+// On reste en 3.3.4 car Akka 2.8 requiert CrossVersion.for3Use2_13, incompatible avec 3.4+.
 ThisBuild / scalaVersion := "3.3.4"
 ThisBuild / organization := "com.fcs"
 
@@ -42,4 +45,12 @@ lazy val root = (project in file("."))
       "-Xms512m",
       "-Xmx2g",
     ),
+
+    Test / fork := true,
+    Test / javaOptions ++= Seq(
+      "-Xms256m",
+      "-Xmx1g",
+    ),
+    Test / testOptions += Tests.Argument("-oD"),
+    Test / parallelExecution := true,
   )

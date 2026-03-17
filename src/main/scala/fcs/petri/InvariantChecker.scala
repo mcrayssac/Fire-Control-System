@@ -53,13 +53,14 @@ object InvariantChecker:
     VerificationReport(results)
 
   def checkINV1(ss: StateSpaceResult): InvariantResult =
+    // T4 exige P4 (FireAuthorized), produit uniquement par T3 qui exige P2 (TargetLocked)
     val violation = ss.arcs.find { arc =>
-      arc.to(P_ReadyToFire) > 0 && arc.transition.id == 4 && arc.from(P_TargetLocked) < 1
+      arc.to(P_ReadyToFire) > 0 && arc.transition.id == 4 && arc.from(P_FireAuthorized) < 1
     }
     InvariantResult(
       id = "INV1",
       description = "Pas de tir sans verrouillage",
-      property = "M(P5) > 0 ⇒ T4 exige P2",
+      property = "T4 exige P4 (produit par T3 qui exige P2)",
       satisfied = violation.isEmpty,
       counterExample = violation.map(_.from)
     )
@@ -123,7 +124,8 @@ object InvariantChecker:
     )
 
   def checkINV7(net: PetriNet, ss: StateSpaceResult): InvariantResult =
-    val controlPlaces = (0 to 9).toVector
+    // P3 (AmmoLoaded) is fed from resource place P10, not from control flow
+    val controlPlaces = Vector(0, 1, 2, 4, 5, 6, 7, 8, 9)
     val initialSum = controlPlaces.map(net.initialMarking(_)).sum
 
     val violation = ss.reachableMarkings.find { m =>
@@ -132,10 +134,10 @@ object InvariantChecker:
     InvariantResult(
       id = "INV7",
       description = "Conservation des jetons (flux de contrôle)",
-      property = s"M(P0)+...+M(P9) = $initialSum (constante)",
+      property = s"P0+P1+P2+P4+...+P9 = $initialSum (constante)",
       satisfied = violation.isEmpty,
       counterExample = violation,
-      details = s"Somme initiale P0..P9 = $initialSum"
+      details = s"Somme initiale (hors P3) = $initialSum"
     )
 
   def checkINV8(net: PetriNet, ss: StateSpaceResult): InvariantResult =
@@ -154,7 +156,6 @@ object InvariantChecker:
 
   def checkINV9(net: PetriNet, ss: StateSpaceResult): InvariantResult =
     val idleStates = ss.reachableMarkings.filter(_(P_Idle) > 0)
-    val nonDeadlocks = ss.reachableMarkings -- ss.deadlocks
     InvariantResult(
       id = "INV9",
       description = "Retour à l'état initial",
@@ -189,6 +190,8 @@ object InvariantChecker:
       dim: Int,
       maxCoeff: Int = 3
   ): Vector[Vector[Int]] =
+    if dim > 10 then return Vector.empty
+
     val result = scala.collection.mutable.ArrayBuffer[Vector[Int]]()
 
     def check(candidate: Vector[Int]): Boolean =
@@ -200,11 +203,9 @@ object InvariantChecker:
       if pos == dim then
         if current.exists(_ != 0) && check(current) then
           result += current
-      else if result.size < 100 then // limite de sécurité
+      else if result.size < 50 then
         for coeff <- 0 to maxCoeff do
           explore(pos + 1, current :+ coeff)
 
-    if dim <= 15 then
-      explore(0, Vector.empty)
-
+    explore(0, Vector.empty)
     result.toVector

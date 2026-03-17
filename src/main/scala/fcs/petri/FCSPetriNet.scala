@@ -28,8 +28,8 @@ object FCSPetriNet:
 
   val T_DetectTarget = Transition(
     id = 0, name = "detect_target",
-    pre  = vec(P_Idle -> 1),
-    post = vec(P_TargetDetected -> 1, P_KafkaQueue -> 1)
+    pre  = vec(P_Idle -> 1, P_AmmoStock -> 1),
+    post = vec(P_TargetDetected -> 1, P_AmmoStock -> 1, P_KafkaQueue -> 1)
   )
 
   val T_LockTarget = Transition(
@@ -52,7 +52,7 @@ object FCSPetriNet:
 
   val T_ReadySync = Transition(
     id = 4, name = "ready_sync",
-    pre  = vec(P_TargetLocked -> 1, P_AmmoLoaded -> 1, P_FireAuthorized -> 1),
+    pre  = vec(P_AmmoLoaded -> 1, P_FireAuthorized -> 1),
     post = vec(P_ReadyToFire -> 1)
   )
 
@@ -65,13 +65,13 @@ object FCSPetriNet:
   val T_EndFire = Transition(
     id = 6, name = "end_fire",
     pre  = vec(P_Firing -> 1),
-    post = vec(P_Reloading -> 1, P_Cooldown -> 1)
+    post = vec(P_Reloading -> 1)
   )
 
   val T_ReloadComplete = Transition(
     id = 7, name = "reload_complete",
     pre  = vec(P_Reloading -> 1),
-    post = vec(P_Idle -> 1)
+    post = vec(P_Cooldown -> 1)
   )
 
   val T_CooldownComplete = Transition(
@@ -112,22 +112,3 @@ object FCSPetriNet:
 
     PetriNet(PlaceNames, transitions, m0)
 
-  def buildWithReadArc(initialAmmo: Int = 3): PetriNet =
-    val t3ReadArc = Transition(
-      id = 3, name = "authorize_fire",
-      pre  = vec(P_TargetLocked -> 1),
-      post = vec(P_TargetLocked -> 1, P_FireAuthorized -> 1) // rend le jeton à P2
-    )
-
-    val transitions = Vector(
-      T_DetectTarget, T_LockTarget, T_LoadAmmo, t3ReadArc,
-      T_ReadySync, T_Fire, T_EndFire, T_ReloadComplete,
-      T_CooldownComplete, T_ErrorDetected, T_ErrorRecovery, T_KafkaLog
-    )
-
-    val m0 = Marking.fromMap(NumPlaces, Map(
-      P_Idle -> 1,
-      P_AmmoStock -> initialAmmo
-    ))
-
-    PetriNet(PlaceNames, transitions, m0)

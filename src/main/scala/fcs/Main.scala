@@ -28,7 +28,7 @@ object Main:
     println("FIRE CONTROL SYSTEM - Verification Formelle")
     println()
 
-    val net = FCSPetriNet.buildWithReadArc(initialAmmo = 3)
+    val net = FCSPetriNet.build(initialAmmo = 3)
     println(s"Réseau construit : $net")
     println(s"Marquage initial : ${net.initialMarking}")
     println()
@@ -79,7 +79,7 @@ object Main:
     println("FIRE CONTROL SYSTEM - Simulation Comparee")
     println()
 
-    val net = FCSPetriNet.buildWithReadArc(initialAmmo = 3)
+    val net = FCSPetriNet.build(initialAmmo = 3)
     println("-- Simulation formelle (Reseau de Petri) --")
     println(s"  M₀ = ${net.initialMarking}")
 

@@ -5,7 +5,6 @@ import akka.actor.typed.scaladsl.{ActorContext, Behaviors}
 import fcs.model.*
 import fcs.model.SupervisorProtocol.*
 import fcs.kafka.Topics
-import java.time.Instant
 import scala.concurrent.duration.*
 
 object SupervisorActor:
