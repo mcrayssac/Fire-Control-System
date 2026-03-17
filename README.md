@@ -1,19 +1,16 @@
 # Fire Control System (FCS)
 
-Modélisation formelle et vérification d'un système de contrôle de tir pour véhicule blindé.
+Modélisation formelle et vérification d'un système de contrôle de tir pour vehicule blinde.
 
-Le système combine :
-- Un **réseau de Pétri** (13 places, 12 transitions) modélisant le cycle de tir
-- Une **vérification formelle** : 10 invariants métier (INV1-INV10) + 6 propriétés LTL
-- Une **implémentation distribuée** en Scala/Akka (modèle d'acteurs) avec bus Kafka
+Le systeme combine une **implementation distribuee** en Scala/Akka (modele d'acteurs) avec un **reseau de Petri** (13 places, 12 transitions) et une **verification formelle** complete (invariants, LTL, P/T-invariants, bornitude, vivacite).
 
-## Prérequis
+## Prerequis
 
 | Outil | Version |
 |-------|---------|
 | JDK | 21+ |
 | sbt | 1.10+ |
-| Apache Kafka | 3.x *(optionnel, uniquement pour le mode simulation complète)* |
+| Apache Kafka | 3.x *(optionnel, mode simulation uniquement)* |
 
 ## Installation
 
@@ -23,87 +20,58 @@ cd Fire-Control-System
 sbt compile
 ```
 
-## Lancer le projet
-
-Trois modes d'exécution :
+## Utilisation
 
 ```bash
-# Vérification formelle du réseau de Pétri (mode par défaut)
-sbt "run verify"
-
-# Simulation Akka/Kafka du système FCS
-sbt "run simulate"
-
-# Simulation comparée : Akka vs modèle formel
-sbt "run compare"
-```
-
-### Mode `verify` (défaut)
-
-Exécute dans l'ordre :
-1. Construction du réseau de Pétri (13 places, 12 transitions)
-2. Exploration BFS de l'espace d'états
-3. Vérification des 10 invariants métier (INV1-INV10)
-4. Vérification des 6 propriétés LTL
-5. Recherche du chemin nominal vers l'état Firing
-
-### Mode `simulate`
-
-Lance le système d'acteurs Akka avec un scénario de tir nominal. Nécessite un appui sur ENTRÉE pour arrêter.
-
-### Mode `compare`
-
-Exécute le cycle de tir en parallèle sur le modèle formel et le système Akka pour comparer les résultats.
-
-## Lancer les tests
-
-```bash
-# Tous les tests (31 tests)
-sbt test
-
-# Tests de vérification formelle uniquement
-sbt "testOnly fcs.petri.*"
+sbt "run verify"     # Verification formelle (defaut)
+sbt "run simulate"   # Simulation Akka/Kafka
+sbt "run compare"    # Simulation comparee Petri Net vs Akka
+sbt test             # Lancer les tests
 ```
 
 ## Structure du projet
 
 ```
-Fire-Control-System/
-├── build.sbt
-├── src/
-│   ├── main/scala/fcs/
-│   │   ├── Main.scala                    # Point d'entrée (verify / simulate / compare)
-│   │   ├── actors/
-│   │   │   ├── SensorActor.scala         # Détection de cibles
-│   │   │   ├── TrackingActor.scala       # Verrouillage balistique
-│   │   │   ├── AmmoActor.scala           # Gestion des munitions
-│   │   │   ├── CommandActor.scala        # Autorisation de tir (ROE)
-│   │   │   ├── FireControlActor.scala    # Orchestrateur central
-│   │   │   ├── KafkaProducerActor.scala  # Publication Kafka
-│   │   │   ├── KafkaConsumerActor.scala  # Audit trail
-│   │   │   └── SupervisorActor.scala     # Supervision et tolérance aux pannes
-│   │   ├── model/
-│   │   │   ├── Messages.scala            # Protocoles de messages inter-acteurs
-│   │   │   └── FCSState.scala            # États et types du système
-│   │   ├── kafka/
-│   │   │   ├── Topics.scala              # Définition des topics Kafka
-│   │   │   └── KafkaConfig.scala         # Configuration Kafka
-│   │   └── petri/
-│   │       ├── PetriNet.scala            # Modèle formel (Marking, Transition, PetriNet)
-│   │       ├── FCSPetriNet.scala         # Réseau de Pétri FCS (13 places, 12 transitions)
-│   │       ├── StateSpaceAnalyzer.scala  # Exploration BFS/DFS de l'espace d'états
-│   │       ├── InvariantChecker.scala    # Vérification INV1-INV10
-│   │       └── LTLVerifier.scala         # Vérification LTL
-│   ├── main/resources/
-│   │   ├── application.conf              # Configuration Akka + Kafka
-│   │   └── logback.xml                   # Logging
-│   └── test/scala/fcs/petri/
-│       ├── PetriNetSpec.scala            # Tests unitaires du modèle
-│       ├── FCSPetriNetSpec.scala         # Tests du réseau FCS
-│       └── VerificationSpec.scala        # Tests de vérification formelle
-└── docs/
-    └── fcs_petri_net.drawio              # Diagramme du réseau de Pétri
+src/main/scala/fcs/
+├── Main.scala                  # Point d'entree (verify / simulate / compare)
+├── actors/                     # 8 acteurs Akka Typed
+├── model/                      # Messages et etats du systeme
+├── kafka/                      # Configuration Kafka
+└── petri/                      # Modele formel et verification
+    ├── PetriNet.scala          # Modele (Marking, Transition, PetriNet)
+    ├── FCSPetriNet.scala       # Reseau de Petri FCS
+    ├── StateSpaceAnalyzer.scala
+    ├── InvariantChecker.scala  # INV1-INV10
+    ├── InvariantAnalysis.scala # P/T-invariants, bornitude, vivacite
+    ├── LTLVerifier.scala       # 6 proprietes LTL
+    └── TraceComparator.scala   # Simulation comparee
+
+docs/
+├── projet_2026.pdf             # Consigne du projet
+├── fcs_petri_net.drawio        # Diagramme du reseau de Petri
+└── rapport/                    # Rapport detaille (5 sections)
 ```
+
+## Couverture des objectifs du projet
+
+Correspondance entre les attentes de la consigne (`docs/projet_2026.pdf`) et les livrables du projet :
+
+| # | Objectif (consigne) | Fichiers sources | Rapport |
+|---|---|---|---|
+| 2.1 | **Etat de l'art** — verification formelle, reseaux de Petri, LTL | — | `docs/rapport/01_etat_de_lart.md` |
+| 2.2 | **Modelisation fonctionnelle** — acteurs Akka, flux de messages, concurrence, supervision, tests | `src/main/scala/fcs/actors/` `src/main/scala/fcs/model/` `src/test/scala/fcs/actors/` | `docs/rapport/02_architecture.md` |
+| 2.3 | **Traduction vers un modele formel** — reseau de Petri, espace d'etats | `src/main/scala/fcs/petri/FCSPetriNet.scala` `src/main/scala/fcs/petri/StateSpaceAnalyzer.scala` `docs/fcs_petri_net.drawio` | `docs/rapport/03_modele_formel.md` |
+| 2.4 | **Verification de proprietes** — transitions, deadlocks, invariants metier, LTL | `src/main/scala/fcs/petri/InvariantChecker.scala` `src/main/scala/fcs/petri/InvariantAnalysis.scala` `src/main/scala/fcs/petri/LTLVerifier.scala` | `docs/rapport/04_verification.md` |
+| 2.5 | **Simulation et validation** — simulation Akka, comparaison reel vs formel | `src/main/scala/fcs/Main.scala` `src/main/scala/fcs/petri/TraceComparator.scala` | `docs/rapport/05_simulation_comparee.md` |
+
+| # | Livrable attendu (section 4) | Localisation |
+|---|---|---|
+| 1 | Sources bibliographiques de reference | `docs/rapport/01_etat_de_lart.md` (section References) |
+| 2 | Modele Akka/Scala fonctionnel | `src/main/scala/fcs/actors/` — 8 acteurs, 68 tests |
+| 3 | Reseau de Petri des comportements critiques | `src/main/scala/fcs/petri/FCSPetriNet.scala` + `docs/fcs_petri_net.drawio` |
+| 4 | Rapport de verification (proprietes + invariants) | `docs/rapport/04_verification.md` |
+| 5 | Simulation comparee reel vs formel | `sbt "run compare"` + `docs/rapport/05_simulation_comparee.md` |
+| 6 | Lien GitHub | https://github.com/mcrayssac/Fire-Control-System |
 
 ## Contributeurs
 
