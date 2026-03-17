@@ -18,7 +18,7 @@ Le système combine :
 ## Installation
 
 ```bash
-git clone <url-du-repo>
+git clone https://github.com/mcrayssac/Fire-Control-System.git
 cd Fire-Control-System
 sbt compile
 ```
