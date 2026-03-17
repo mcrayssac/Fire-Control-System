@@ -38,7 +38,7 @@ jobs:
         run: sbt "run compare"
         
       - name: Run Akka/Kafka simulation
-        run: sbt "run compare"
+        run: sbt "run simulate"
       
         
       
