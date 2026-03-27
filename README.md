@@ -22,12 +22,13 @@ sbt compile
 
 ## Utilisation
 
-```bash
-sbt "run verify"     # Verification formelle (defaut)
-sbt "run simulate"   # Simulation Akka/Kafka
-sbt "run compare"    # Simulation comparee Petri Net vs Akka
-sbt test             # Lancer les tests
-```
+| Commande | Resume |
+|---|---|
+| `sbt compile` | Compile le projet (sources principales + dependances). |
+| `sbt "run"` | Lance le mode par defaut (`verify`). |
+| `sbt "run verify"` | Execute l'analyse formelle complete: exploration de l'espace d'etats, analyse structurelle (P/T-invariants, bornitude, vivacite), invariants metier, proprietes LTL, et chemin vers `Firing`. |
+| `sbt "run simulate"` | Lance la simulation Akka, demarre le systeme, joue le scenario nominal (`NominalFireCycle`), puis attend `ENTREE` pour arreter. |
+| `sbt "run compare"` | Lance la simulation comparee: scenarios Petri, collecte de traces Akka, puis rapport de comparaison Petri vs Akka. |
 
 ## Structure du projet
 
