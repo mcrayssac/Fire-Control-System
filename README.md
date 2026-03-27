@@ -22,11 +22,12 @@ sbt compile
 
 ## Utilisation
 
-```bash
-sbt test                 # Tests unitaires + verification formelle (invariants, LTL, analyse structurelle)
-sbt "run akka-demo"      # Demonstration interactive du systeme Akka/Kafka
-sbt "run conformance"    # Verification de conformite Akka vs modele formel (Petri Net)
-```
+| Commande | Resume |
+|---|---|
+| `sbt compile` | Compile le projet (sources principales + dependances). |
+| `sbt test` | Lance les tests unitaires et la verification formelle (invariants, LTL, analyse structurelle). |
+| `sbt "run akka-demo"` | Lance la demonstration du systeme Akka/Kafka (scenario nominal), puis attend `ENTREE` pour arreter. |
+| `sbt "run conformance"` | Lance la verification de conformite Akka vs modele formel (Petri Net) avec rapport compare. |
 
 ## Structure du projet
 
