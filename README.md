@@ -29,6 +29,7 @@ sbt compile
 | `sbt "run verify"` | Execute l'analyse formelle complete: exploration de l'espace d'etats, analyse structurelle (P/T-invariants, bornitude, vivacite), invariants metier, proprietes LTL, et chemin vers `Firing`. |
 | `sbt "run simulate"` | Lance la simulation Akka, demarre le systeme, joue le scenario nominal (`NominalFireCycle`), puis attend `ENTREE` pour arreter. |
 | `sbt "run compare"` | Lance la simulation comparee: scenarios Petri, collecte de traces Akka, puis rapport de comparaison Petri vs Akka. |
+| `sbt "run live"` | Lance le panneau interactif en mode **verbose** (par defaut). Utiliser l'option `compact` si besoin d'un affichage plus concis. |
 
 ## Structure du projet
 

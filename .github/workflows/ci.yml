@@ -28,6 +28,9 @@ jobs:
       - name: Run Petri Net verification tests
         run: sbt "testOnly fcs.petri.*"
 
+      - name: Run Live mode (Interactive Simulator) tests
+        run: sbt "testOnly fcs.petri.InteractiveSimulatorSpec"
+
       - name: Run all tests
         run: sbt test
 

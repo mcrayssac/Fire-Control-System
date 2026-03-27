@@ -15,12 +15,18 @@ object Main:
       case "verify"   => runVerification()
       case "simulate" => runAkkaSimulation()
       case "compare"  => runComparison()
+      case "live"     => runInteractive(args.lift(1))
       case _ =>
         println("""
-          |Usage: sbt "run <mode>"
+          |Usage:
+          |  sbt "run <mode>"
+          |  sbt "run live [verbose|compact]"
+          |
+          |Modes:
           |  verify    — Analyse formelle du réseau de Pétri (défaut)
           |  simulate  — Simulation Akka/Kafka du système FCS
           |  compare   — Simulation comparée (Akka vs modèle formel)
+          |  live      — Panneau interactif (verbose par défaut, compact optionnel)
           |""".stripMargin)
 
   def runVerification(): Unit =
@@ -121,3 +127,8 @@ object Main:
 
     // Phase 3 : Comparaison programmatique
     println(TraceComparator.comparisonReport(comparisons.result()))
+
+  def runInteractive(modeArg: Option[String] = None): Unit =
+    val net = FCSPetriNet.build(initialAmmo = 3)
+    val mode = modeArg.map(InteractiveSimulator.parseOutputMode).getOrElse(InteractiveSimulator.OutputMode.Verbose)
+    InteractiveSimulator.run(net, mode)
