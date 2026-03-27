@@ -1,8 +1,8 @@
 package fcs
 
 import akka.actor.typed.ActorSystem
-import fcs.actors.{SupervisorActor, KafkaProducerActor}
-import fcs.model.SupervisorProtocol.{StartSystem, SimulateScenario, SimulationScenario}
+import fcs.actors.{KafkaProducerActor, SupervisorActor}
+import fcs.model.SupervisorProtocol.{SimulateScenario, SimulationScenario, StartSystem}
 import fcs.petri.*
 
 import scala.io.StdIn
@@ -10,59 +10,25 @@ import scala.io.StdIn
 object Main:
 
   def main(args: Array[String]): Unit =
-    val mode = args.headOption.getOrElse("verify")
+    val mode = args.headOption.getOrElse("")
     mode match
-      case "verify"   => runVerification()
-      case "simulate" => runAkkaSimulation()
-      case "compare"  => runComparison()
-      case "live"     => runInteractive(args.lift(1))
-      case _ =>
-        println("""
-          |Usage:
-          |  sbt "run <mode>"
-          |  sbt "run live [verbose|compact]"
+      case "akka-demo" | "simulate"    => runAkkaSimulation()
+      case "conformance" | "compare"   => runComparison()
+      case "live"                       => runInteractive(args.lift(1))
+      case unknown =>
+        val msg = if unknown.nonEmpty then s"Commande inconnue : '$unknown'" else "Aucun mode specifie"
+        println(s"""
+          |$msg
           |
-          |Modes:
-          |  verify    — Analyse formelle du réseau de Pétri (défaut)
-          |  simulate  — Simulation Akka/Kafka du système FCS
-          |  compare   — Simulation comparée (Akka vs modèle formel)
-          |  live      — Panneau interactif (verbose par défaut, compact optionnel)
+          |Commandes disponibles (voir README.md) :
+          |  sbt compile                         — Compilation du projet
+          |  sbt test                            — Tests unitaires + verification formelle
+          |  sbt "run akka-demo"                — Demonstration interactive du systeme Akka/Kafka
+          |  sbt "run conformance"              — Verification de conformite Akka vs modele formel
+          |  sbt "run live [verbose|compact]"   — Simulateur interactif (verbose par defaut)
+          |
+          |Veuillez reessayer avec l'une des commandes ci-dessus.
           |""".stripMargin)
-
-  def runVerification(): Unit =
-    println()
-    println("FIRE CONTROL SYSTEM - Verification Formelle")
-    println()
-
-    val net = FCSPetriNet.build(initialAmmo = 3)
-    println(s"Reseau construit : $net")
-    println(s"Marquage initial : ${net.initialMarking}")
-    println()
-
-    println("-- Exploration de l'espace d'etats (BFS) --")
-    val stateSpace = StateSpaceAnalyzer.explore(net)
-    println(stateSpace.report(net))
-
-    // Analyse structurelle (P/T-invariants, bornitude, vivacite)
-    val structural = InvariantAnalysis.fullAnalysis(net, stateSpace)
-    println(InvariantAnalysis.report(net, structural))
-
-    // Invariants metier
-    val invReport = InvariantChecker.checkAll(net, stateSpace)
-    println(invReport.report)
-
-    // Proprietes LTL
-    val ltlResults = LTLVerifier.verifyAll(net, stateSpace)
-    println(LTLVerifier.report(ltlResults))
-
-    println("-- Chemin : cycle de tir nominal --")
-    StateSpaceAnalyzer.findPath(net, m => m(FCSPetriNet.P_Firing) > 0) match
-      case Some(path) =>
-        println(s"  Sequence de transitions (${path.size} pas) :")
-        path.foreach(t => println(s"    -> ${t.name}"))
-      case None =>
-        println("  Aucun chemin trouve vers l'etat Firing")
-    println()
 
   def runAkkaSimulation(): Unit =
     println()

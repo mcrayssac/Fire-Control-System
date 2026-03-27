@@ -55,3 +55,15 @@ lazy val root = (project in file("."))
     Test / testOptions += Tests.Argument("-oD"),
     Test / parallelExecution := true,
   )
+
+// --- Message d'accueil avec les commandes valides ---
+
+onLoadMessage := {
+  s"""
+    |Fire Control System (FCS) - Commandes disponibles (voir README.md) :
+    |  compile              — Compilation du projet
+    |  test                 — Tests unitaires + verification formelle
+    |  "run akka-demo"      — Demonstration interactive du systeme Akka/Kafka
+    |  "run conformance"    — Verification de conformite Akka vs modele formel
+    |""".stripMargin
+}

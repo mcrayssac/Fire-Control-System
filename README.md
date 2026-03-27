@@ -25,17 +25,16 @@ sbt compile
 | Commande | Resume |
 |---|---|
 | `sbt compile` | Compile le projet (sources principales + dependances). |
-| `sbt "run"` | Lance le mode par defaut (`verify`). |
-| `sbt "run verify"` | Execute l'analyse formelle complete: exploration de l'espace d'etats, analyse structurelle (P/T-invariants, bornitude, vivacite), invariants metier, proprietes LTL, et chemin vers `Firing`. |
-| `sbt "run simulate"` | Lance la simulation Akka, demarre le systeme, joue le scenario nominal (`NominalFireCycle`), puis attend `ENTREE` pour arreter. |
-| `sbt "run compare"` | Lance la simulation comparee: scenarios Petri, collecte de traces Akka, puis rapport de comparaison Petri vs Akka. |
-| `sbt "run live"` | Lance le panneau interactif en mode **verbose** (par defaut). Utiliser l'option `compact` si besoin d'un affichage plus concis. |
+| `sbt test` | Lance les tests unitaires et la verification formelle (invariants, LTL, analyse structurelle). |
+| `sbt "run akka-demo"` | Lance la demonstration du systeme Akka/Kafka (scenario nominal), puis attend `ENTREE` pour arreter. |
+| `sbt "run conformance"` | Lance la verification de conformite Akka vs modele formel (Petri Net) avec rapport compare. |
+| `sbt "run live"` | Lance le panneau interactif (mode **verbose** par defaut). Option: `sbt "run live compact"`. |
 
 ## Structure du projet
 
 ```
 src/main/scala/fcs/
-├── Main.scala                  # Point d'entree (verify / simulate / compare)
+├── Main.scala                  # Point d'entree (akka-demo / conformance / live)
 ├── actors/                     # 8 acteurs Akka Typed
 ├── model/                      # Messages et etats du systeme
 ├── kafka/                      # Configuration Kafka
@@ -72,7 +71,7 @@ Correspondance entre les attentes de la consigne (`docs/projet_2026.pdf`) et les
 | 2 | Modele Akka/Scala fonctionnel | `src/main/scala/fcs/actors/` — 8 acteurs, 68 tests |
 | 3 | Reseau de Petri des comportements critiques | `src/main/scala/fcs/petri/FCSPetriNet.scala` + `docs/fcs_petri_net.drawio` |
 | 4 | Rapport de verification (proprietes + invariants) | `docs/rapport/04_verification.md` |
-| 5 | Simulation comparee reel vs formel | `sbt "run compare"` + `docs/rapport/05_simulation_comparee.md` |
+| 5 | Simulation comparee reel vs formel | `sbt "run conformance"` + `docs/rapport/05_simulation_comparee.md` |
 | 6 | Lien GitHub | https://github.com/mcrayssac/Fire-Control-System |
 
 ## Contributeurs
