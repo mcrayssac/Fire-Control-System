@@ -14,13 +14,18 @@ object Main:
     mode match
       case "akka-demo"   => runAkkaSimulation()
       case "conformance" => runComparison()
-      case _ =>
-        println("""
-          |Usage: sbt "run <mode>"
-          |  akka-demo    — Démonstration interactive du système Akka/Kafka
-          |  conformance  — Vérification de conformité Akka vs modèle formel (Petri Net)
+      case unknown =>
+        val msg = if unknown.nonEmpty then s"Commande inconnue : '$unknown'" else "Aucun mode specifie"
+        println(s"""
+          |$msg
           |
-          |La vérification formelle est intégrée dans sbt test.
+          |Commandes disponibles (voir README.md) :
+          |  sbt compile              — Compilation du projet
+          |  sbt test                 — Tests unitaires + verification formelle
+          |  sbt "run akka-demo"      — Demonstration interactive du systeme Akka/Kafka
+          |  sbt "run conformance"    — Verification de conformite Akka vs modele formel
+          |
+          |Veuillez reessayer avec l'une des commandes ci-dessus.
           |""".stripMargin)
 
   def runAkkaSimulation(): Unit =
