@@ -38,9 +38,17 @@ object Main:
     system ! StartSystem
     Thread.sleep(500)
     system ! SimulateScenario(SimulationScenario.NominalFireCycle)
-    println("\nAppuyez sur ENTRÉE pour arrêter...")
-    StdIn.readLine()
+    waitForEnterOrTimeout(timeoutMs = 10000L)
     system.terminate()
+
+  private def waitForEnterOrTimeout(timeoutMs: Long): Unit =
+    if System.console() != null then
+      println("\nAppuyez sur ENTRÉE pour arrêter...")
+      StdIn.readLine()
+    else
+      val seconds = timeoutMs / 1000
+      println(s"\nTerminal non interactif detecte. Arret automatique dans ${seconds}s...")
+      Thread.sleep(timeoutMs)
 
   def runComparison(): Unit =
     println()
