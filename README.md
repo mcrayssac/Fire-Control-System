@@ -50,7 +50,7 @@ src/main/scala/fcs/
 docs/
 ├── projet_2026.pdf             # Consigne du projet
 ├── fcs_petri_net.drawio        # Diagramme du reseau de Petri
-└── rapport/                    # Rapport detaille (5 sections)
+└── rapport/                    # Rapport detaille (6 sections)
 ```
 
 ## Couverture des objectifs du projet
@@ -64,6 +64,7 @@ Correspondance entre les attentes de la consigne (`docs/projet_2026.pdf`) et les
 | 2.3 | **Traduction vers un modele formel** — reseau de Petri, espace d'etats | `src/main/scala/fcs/petri/FCSPetriNet.scala` `src/main/scala/fcs/petri/StateSpaceAnalyzer.scala` `docs/fcs_petri_net.drawio` | `docs/rapport/03_modele_formel.md` |
 | 2.4 | **Verification de proprietes** — transitions, deadlocks, invariants metier, LTL | `src/main/scala/fcs/petri/InvariantChecker.scala` `src/main/scala/fcs/petri/InvariantAnalysis.scala` `src/main/scala/fcs/petri/LTLVerifier.scala` | `docs/rapport/04_verification.md` |
 | 2.5 | **Simulation et validation** — simulation Akka, comparaison reel vs formel | `src/main/scala/fcs/Main.scala` `src/main/scala/fcs/petri/TraceComparator.scala` | `docs/rapport/05_simulation_comparee.md` |
+| 2.6 | **Mode live interactif** — panneau de commande, modes verbose/compact, UX operateur | `src/main/scala/fcs/Main.scala` `src/main/scala/fcs/petri/InteractiveSimulator.scala` `src/test/scala/fcs/petri/InteractiveSimulatorSpec.scala` | `docs/rapport/06_mode_live_interactif.md` |
 
 | # | Livrable attendu (section 4) | Localisation |
 |---|---|---|
@@ -72,7 +73,8 @@ Correspondance entre les attentes de la consigne (`docs/projet_2026.pdf`) et les
 | 3 | Reseau de Petri des comportements critiques | `src/main/scala/fcs/petri/FCSPetriNet.scala` + `docs/fcs_petri_net.drawio` |
 | 4 | Rapport de verification (proprietes + invariants) | `docs/rapport/04_verification.md` |
 | 5 | Simulation comparee reel vs formel | `sbt "run conformance"` + `docs/rapport/05_simulation_comparee.md` |
-| 6 | Lien GitHub | https://github.com/mcrayssac/Fire-Control-System |
+| 6 | Rapport mode live interactif | `docs/rapport/06_mode_live_interactif.md` |
+| 7 | Lien GitHub | https://github.com/mcrayssac/Fire-Control-System |
 
 ## Contributeurs
 
