@@ -1,8 +1,8 @@
 package fcs
 
 import akka.actor.typed.ActorSystem
-import fcs.actors.{SupervisorActor, KafkaProducerActor}
-import fcs.model.SupervisorProtocol.{StartSystem, SimulateScenario, SimulationScenario}
+import fcs.actors.{KafkaProducerActor, SupervisorActor}
+import fcs.model.SupervisorProtocol.{SimulateScenario, SimulationScenario, StartSystem}
 import fcs.petri.*
 
 import scala.io.StdIn
@@ -12,18 +12,20 @@ object Main:
   def main(args: Array[String]): Unit =
     val mode = args.headOption.getOrElse("")
     mode match
-      case "akka-demo"   => runAkkaSimulation()
-      case "conformance" => runComparison()
+      case "akka-demo" | "simulate"    => runAkkaSimulation()
+      case "conformance" | "compare"   => runComparison()
+      case "live"                       => runInteractive(args.lift(1))
       case unknown =>
         val msg = if unknown.nonEmpty then s"Commande inconnue : '$unknown'" else "Aucun mode specifie"
         println(s"""
           |$msg
           |
           |Commandes disponibles (voir README.md) :
-          |  sbt compile              — Compilation du projet
-          |  sbt test                 — Tests unitaires + verification formelle
-          |  sbt "run akka-demo"      — Demonstration interactive du systeme Akka/Kafka
-          |  sbt "run conformance"    — Verification de conformite Akka vs modele formel
+          |  sbt compile                         — Compilation du projet
+          |  sbt test                            — Tests unitaires + verification formelle
+          |  sbt "run akka-demo"                — Demonstration interactive du systeme Akka/Kafka
+          |  sbt "run conformance"              — Verification de conformite Akka vs modele formel
+          |  sbt "run live [verbose|compact]"   — Simulateur interactif (verbose par defaut)
           |
           |Veuillez reessayer avec l'une des commandes ci-dessus.
           |""".stripMargin)
@@ -36,9 +38,17 @@ object Main:
     system ! StartSystem
     Thread.sleep(500)
     system ! SimulateScenario(SimulationScenario.NominalFireCycle)
-    println("\nAppuyez sur ENTRÉE pour arrêter...")
-    StdIn.readLine()
+    waitForEnterOrTimeout(timeoutMs = 10000L)
     system.terminate()
+
+  private def waitForEnterOrTimeout(timeoutMs: Long): Unit =
+    if System.console() != null then
+      println("\nAppuyez sur ENTRÉE pour arrêter...")
+      StdIn.readLine()
+    else
+      val seconds = timeoutMs / 1000
+      println(s"\nTerminal non interactif detecte. Arret automatique dans ${seconds}s...")
+      Thread.sleep(timeoutMs)
 
   def runComparison(): Unit =
     println()
@@ -91,3 +101,8 @@ object Main:
 
     // Phase 3 : Comparaison programmatique
     println(TraceComparator.comparisonReport(comparisons.result()))
+
+  def runInteractive(modeArg: Option[String] = None): Unit =
+    val net = FCSPetriNet.build(initialAmmo = 3)
+    val mode = modeArg.map(InteractiveSimulator.parseOutputMode).getOrElse(InteractiveSimulator.OutputMode.Verbose)
+    InteractiveSimulator.run(net, mode)

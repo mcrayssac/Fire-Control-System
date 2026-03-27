@@ -41,6 +41,7 @@ lazy val root = (project in file("."))
     ),
 
     run / fork := true,
+    run / connectInput := true,
     run / javaOptions ++= Seq(
       "-Xms512m",
       "-Xmx2g",
