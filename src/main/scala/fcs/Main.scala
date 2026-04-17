@@ -9,6 +9,12 @@ import scala.io.StdIn
 
 object Main:
 
+  private[fcs] enum ShutdownMode:
+    case WaitForEnter, Timeout
+
+  private val ShutdownModeProperty = "fcs.akkaDemo.shutdownMode"
+  private val ShutdownModeEnvVar = "FCS_AKKA_DEMO_SHUTDOWN_MODE"
+
   def main(args: Array[String]): Unit =
     val mode = args.headOption.getOrElse("")
     mode match
@@ -42,13 +48,43 @@ object Main:
     system.terminate()
 
   private def waitForEnterOrTimeout(timeoutMs: Long): Unit =
-    if System.console() != null then
-      println("\nAppuyez sur ENTRÉE pour arrêter...")
-      StdIn.readLine()
-    else
-      val seconds = timeoutMs / 1000
-      println(s"\nTerminal non interactif detecte. Arret automatique dans ${seconds}s...")
-      Thread.sleep(timeoutMs)
+    shutdownModeFor(sys.env, sys.props, System.console() != null) match
+      case ShutdownMode.WaitForEnter =>
+        println(waitForEnterMessage)
+        StdIn.readLine()
+      case ShutdownMode.Timeout =>
+        println(timeoutMessage(timeoutMs))
+        Thread.sleep(timeoutMs)
+
+  private[fcs] def shutdownModeFor(
+      environment: collection.Map[String, String],
+      properties: collection.Map[String, String],
+      hasConsole: Boolean
+  ): ShutdownMode =
+    shutdownModeOverride(properties.get(ShutdownModeProperty))
+      .orElse(shutdownModeOverride(environment.get(ShutdownModeEnvVar)))
+      .getOrElse {
+        if isCiEnvironment(environment) || !hasConsole then ShutdownMode.Timeout
+        else ShutdownMode.WaitForEnter
+      }
+
+  private def shutdownModeOverride(raw: Option[String]): Option[ShutdownMode] =
+    raw.map(_.trim.toLowerCase).collect {
+      case "wait" | "enter"   => ShutdownMode.WaitForEnter
+      case "timeout" | "auto" => ShutdownMode.Timeout
+    }
+
+  private def isCiEnvironment(environment: collection.Map[String, String]): Boolean =
+    Seq("CI", "GITHUB_ACTIONS").exists { key =>
+      environment.get(key).exists(_.trim.nonEmpty)
+    }
+
+  private[fcs] def waitForEnterMessage: String =
+    "\nAppuyez sur ENTRÉE pour arrêter..."
+
+  private[fcs] def timeoutMessage(timeoutMs: Long): String =
+    val seconds = timeoutMs / 1000
+    s"\nMode d'arret automatique active. Arret dans ${seconds}s..."
 
   def runComparison(): Unit =
     println()
