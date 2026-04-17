@@ -28,17 +28,17 @@ jobs:
       - name: Run Petri Net verification tests
         run: sbt "testOnly fcs.petri.*"
 
+      - name: Run Live mode (Interactive Simulator) tests
+        run: sbt "testOnly fcs.petri.InteractiveSimulatorSpec"
+
       - name: Run all tests
         run: sbt test
 
-      - name: Run formal verification
-        run: sbt "run verify"
+      - name: Run conformance check (Petri Net vs Akka)
+        run: sbt "run conformance"
 
-      - name: Run comparison of Petri Net vs Akka simulations
-        run: sbt "run compare"
-        
-      - name: Run Akka/Kafka simulation
-        run: sbt "run simulate"
+      - name: Run Akka/Kafka demo
+        run: sbt "run akka-demo"
       
         
       

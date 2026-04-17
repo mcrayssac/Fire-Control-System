@@ -41,17 +41,43 @@ class VerificationSpec extends AnyFunSuite with Matchers:
   test("INV6: No firing during cooldown"):
     invReport.results.find(_.id == "INV6").get.satisfied shouldBe true
 
+  test("INV7: Control flow token conservation"):
+    invReport.results.find(_.id == "INV7").get.satisfied shouldBe true
+
   test("INV8: Every fire event is logged"):
     invReport.results.find(_.id == "INV8").get.satisfied shouldBe true
 
+  test("INV9: Return to initial state"):
+    invReport.results.find(_.id == "INV9").get.satisfied shouldBe true
+
+  test("INV10: No deadlocks"):
+    invReport.results.find(_.id == "INV10").get.satisfied shouldBe true
+
+  test("All invariants satisfied"):
+    invReport.allSatisfied shouldBe true
+    info(s"${invReport.numSatisfied}/${invReport.results.size} invariants satisfied")
+
   test("LTL: G(¬(firing ∧ reloading))"):
     ltlResults.find(_.formula.contains("firing ∧ reloading")).get.satisfied shouldBe true
+
+  test("LTL: G(fire → F(log_recorded))"):
+    ltlResults.find(_.formula.contains("log_recorded")).get.satisfied shouldBe true
+
+  test("LTL: G(error → F(idle))"):
+    ltlResults.find(_.formula.contains("error")).get.satisfied shouldBe true
+
+  test("LTL: G(F(idle)) — fairness"):
+    ltlResults.find(_.formula == "G(F(idle))").get.satisfied shouldBe true
 
   test("LTL: G(¬(ammo < 0))"):
     ltlResults.find(_.formula.contains("ammo")).get.satisfied shouldBe true
 
   test("LTL: G(cooldown → ¬firing)"):
     ltlResults.find(_.formula.contains("cooldown")).get.satisfied shouldBe true
+
+  test("All LTL properties satisfied"):
+    ltlResults.forall(_.satisfied) shouldBe true
+    info(s"${ltlResults.count(_.satisfied)}/${ltlResults.size} LTL properties satisfied")
 
   test("Path to firing state exists"):
     val path = StateSpaceAnalyzer.findPath(
