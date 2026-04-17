@@ -9,6 +9,9 @@ import scala.io.StdIn
 
 object Main:
 
+  private[fcs] enum ShutdownMode:
+    case WaitForEnter, Timeout
+
   def main(args: Array[String]): Unit =
     val mode = args.headOption.getOrElse("")
     mode match
@@ -42,13 +45,29 @@ object Main:
     system.terminate()
 
   private def waitForEnterOrTimeout(timeoutMs: Long): Unit =
-    if System.console() != null then
-      println("\nAppuyez sur ENTRÉE pour arrêter...")
-      StdIn.readLine()
-    else
-      val seconds = timeoutMs / 1000
-      println(s"\nTerminal non interactif detecte. Arret automatique dans ${seconds}s...")
-      Thread.sleep(timeoutMs)
+    shutdownModeFor(sys.env) match
+      case ShutdownMode.WaitForEnter =>
+        println(waitForEnterMessage)
+        StdIn.readLine()
+      case ShutdownMode.Timeout =>
+        println(timeoutMessage(timeoutMs))
+        Thread.sleep(timeoutMs)
+
+  private[fcs] def shutdownModeFor(environment: collection.Map[String, String]): ShutdownMode =
+    if isCiEnvironment(environment) then ShutdownMode.Timeout
+    else ShutdownMode.WaitForEnter
+
+  private def isCiEnvironment(environment: collection.Map[String, String]): Boolean =
+    Seq("CI", "GITHUB_ACTIONS").exists { key =>
+      environment.get(key).exists(_.trim.nonEmpty)
+    }
+
+  private[fcs] def waitForEnterMessage: String =
+    "\nAppuyez sur ENTRÉE pour arrêter..."
+
+  private[fcs] def timeoutMessage(timeoutMs: Long): String =
+    val seconds = timeoutMs / 1000
+    s"\nEnvironnement CI detecte. Arret automatique dans ${seconds}s..."
 
   def runComparison(): Unit =
     println()
