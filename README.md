@@ -26,7 +26,7 @@ sbt compile
 |---|---|
 | `sbt compile` | Compile le projet (sources principales + dependances). |
 | `sbt test` | Lance les tests unitaires et la verification formelle (invariants, LTL, analyse structurelle). |
-| `sbt "run akka-demo"` | Lance la demonstration du systeme Akka/Kafka (scenario nominal). En local: attente de `ENTREE`; en environnement CI: arret automatique apres 10 secondes. |
+| `sbt "run akka-demo"` | Lance la demonstration du systeme Akka/Kafka (scenario nominal). Par defaut: attente de `ENTREE` si une console interactive est detectee, sinon arret automatique apres 10 secondes. En CI, le timeout est force. Override possible via `-Dfcs.akkaDemo.shutdownMode=wait|timeout` ou `FCS_AKKA_DEMO_SHUTDOWN_MODE=wait|timeout`. |
 | `sbt "run conformance"` | Lance la verification de conformite Akka vs modele formel (Petri Net) avec rapport compare. |
 | `sbt "run live"` | Lance le panneau interactif (mode **verbose** par defaut). Option: `sbt "run live compact"`. |
 

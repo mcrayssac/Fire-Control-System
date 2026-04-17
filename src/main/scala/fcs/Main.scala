@@ -12,6 +12,9 @@ object Main:
   private[fcs] enum ShutdownMode:
     case WaitForEnter, Timeout
 
+  private val ShutdownModeProperty = "fcs.akkaDemo.shutdownMode"
+  private val ShutdownModeEnvVar = "FCS_AKKA_DEMO_SHUTDOWN_MODE"
+
   def main(args: Array[String]): Unit =
     val mode = args.headOption.getOrElse("")
     mode match
@@ -45,7 +48,7 @@ object Main:
     system.terminate()
 
   private def waitForEnterOrTimeout(timeoutMs: Long): Unit =
-    shutdownModeFor(sys.env) match
+    shutdownModeFor(sys.env, sys.props, System.console() != null) match
       case ShutdownMode.WaitForEnter =>
         println(waitForEnterMessage)
         StdIn.readLine()
@@ -53,9 +56,23 @@ object Main:
         println(timeoutMessage(timeoutMs))
         Thread.sleep(timeoutMs)
 
-  private[fcs] def shutdownModeFor(environment: collection.Map[String, String]): ShutdownMode =
-    if isCiEnvironment(environment) then ShutdownMode.Timeout
-    else ShutdownMode.WaitForEnter
+  private[fcs] def shutdownModeFor(
+      environment: collection.Map[String, String],
+      properties: collection.Map[String, String],
+      hasConsole: Boolean
+  ): ShutdownMode =
+    shutdownModeOverride(properties.get(ShutdownModeProperty))
+      .orElse(shutdownModeOverride(environment.get(ShutdownModeEnvVar)))
+      .getOrElse {
+        if isCiEnvironment(environment) || !hasConsole then ShutdownMode.Timeout
+        else ShutdownMode.WaitForEnter
+      }
+
+  private def shutdownModeOverride(raw: Option[String]): Option[ShutdownMode] =
+    raw.map(_.trim.toLowerCase).collect {
+      case "wait" | "enter"   => ShutdownMode.WaitForEnter
+      case "timeout" | "auto" => ShutdownMode.Timeout
+    }
 
   private def isCiEnvironment(environment: collection.Map[String, String]): Boolean =
     Seq("CI", "GITHUB_ACTIONS").exists { key =>
@@ -67,7 +84,7 @@ object Main:
 
   private[fcs] def timeoutMessage(timeoutMs: Long): String =
     val seconds = timeoutMs / 1000
-    s"\nEnvironnement CI detecte. Arret automatique dans ${seconds}s..."
+    s"\nMode d'arret automatique active. Arret dans ${seconds}s..."
 
   def runComparison(): Unit =
     println()
