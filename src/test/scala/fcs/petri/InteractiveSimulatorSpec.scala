@@ -198,6 +198,14 @@ class InteractiveSimulatorSpec extends AnyFunSuite with Matchers:
     result shouldBe net.initialMarking
     fired shouldBe empty
 
+  test("progressAuto preserves any provided fired prefix in forward order"):
+    val m1 = T_DetectTarget.fire(net.initialMarking).get
+    val m2 = T_LockTarget.fire(m1).get
+
+    val (_, firedNames) = InteractiveSimulator.progressAuto(net, m2, fired = List("prefix"))
+
+    firedNames shouldBe List("prefix", "load_ammo", "authorize_fire", "ready_sync")
+
   test("With zero ammo, detect_target is still enabled but load_ammo will not fire"):
     val emptyNet = FCSPetriNet.build(initialAmmo = 0)
     // detect_target requires P_Idle=1 and P_AmmoStock=1, so it should NOT be enabled

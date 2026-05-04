@@ -65,5 +65,6 @@ onLoadMessage := {
     |  test                 — Tests unitaires + verification formelle
     |  "run akka-demo"      — Demonstration interactive du systeme Akka/Kafka
     |  "run conformance"    — Verification de conformite Akka vs modele formel
+    |  "run live [verbose|compact]"   — Simulateur interactif (verbose par defaut)
     |""".stripMargin
 }

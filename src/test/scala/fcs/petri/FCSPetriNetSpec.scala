@@ -84,6 +84,10 @@ class FCSPetriNetSpec extends AnyFunSuite with Matchers:
     m = net.transitions(1).fire(m).get
     net.transitions(4).isEnabled(m) shouldBe false
 
+  test("T0 (detect_target) is blocked when ammo stock is empty"):
+    val emptyNet = FCSPetriNet.build(initialAmmo = 0)
+    emptyNet.transitions(0).isEnabled(emptyNet.initialMarking) shouldBe false
+
   test("T2 (load_ammo) is blocked when ammo stock is empty"):
     val emptyNet = FCSPetriNet.build(initialAmmo = 0)
     emptyNet.transitions(2).isEnabled(emptyNet.initialMarking) shouldBe false

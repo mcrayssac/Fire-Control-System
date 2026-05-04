@@ -91,27 +91,29 @@ object InteractiveSimulator:
    * list of transition names that were fired.
    */
   def progressAuto(net: PetriNet, marking: Marking, fired: List[String] = Nil): (Marking, List[String]) =
-    progressAutoLoop(net, marking, fired, Set.empty)
+    advanceAutoTransitions(net, marking, Set.empty, fired.reverse, _ => ())
 
   @tailrec
-  private def progressAutoLoop(
+  private def advanceAutoTransitions(
       net: PetriNet,
       marking: Marking,
-      fired: List[String],
-      alreadyFired: Set[String]
+      alreadyFired: Set[String],
+      firedReversed: List[String],
+      onAutoFire: Transition => Unit
   ): (Marking, List[String]) =
     val enabled = net.enabledTransitions(marking)
-    val autoEnabled = enabled.filter(t => !ManualTransitions.contains(t.name) && !alreadyFired.contains(t.name))
-    val manualEnabled = enabled.filter(t => ManualTransitions.contains(t.name))
+    val manualEnabled = enabled.filter(isManual)
+    val autoEnabled = enabled.filter(t => !isManual(t) && !alreadyFired.contains(t.name))
     if autoEnabled.isEmpty || manualEnabled.nonEmpty then
-      (marking, fired.reverse)
+      (marking, firedReversed.reverse)
     else
       val t = autoEnabled.head
       t.fire(marking) match
         case Some(newMarking) =>
-          progressAutoLoop(net, newMarking, t.name :: fired, alreadyFired + t.name)
+          onAutoFire(t)
+          advanceAutoTransitions(net, newMarking, alreadyFired + t.name, t.name :: firedReversed, onAutoFire)
         case None =>
-          (marking, fired.reverse)
+          (marking, firedReversed.reverse)
 
   /**
    * Return the list of manual transitions enabled from the given marking
@@ -308,28 +310,12 @@ object InteractiveSimulator:
     * Each transition fires at most once per pass.
     */
   private def runAutoTransitions(net: PetriNet, marking: Marking, mode: OutputMode): (Marking, List[String]) =
-    runAutoLoop(net, marking, Set.empty, Nil, mode)
-
-  @tailrec
-  private def runAutoLoop(
-      net: PetriNet,
-      marking: Marking,
-      alreadyFired: Set[String],
-      fired: List[String],
-      mode: OutputMode
-  ): (Marking, List[String]) =
-    val enabled = net.enabledTransitions(marking)
-    val autoEnabled = enabled.filter(t => !isManual(t) && !alreadyFired.contains(t.name))
-    val manualEnabled = enabled.filter(isManual)
-
-    if autoEnabled.isEmpty || manualEnabled.nonEmpty then
-      (marking, fired.reverse)
-    else
-      val t = autoEnabled.head
-      t.fire(marking) match
-        case Some(newMarking) =>
-          if mode == OutputMode.Verbose then simulateDelayVerbose(t)
-          else Thread.sleep(delayMs(t))
-          runAutoLoop(net, newMarking, alreadyFired + t.name, t.name :: fired, mode)
-        case None =>
-          (marking, fired.reverse)
+    advanceAutoTransitions(
+      net,
+      marking,
+      Set.empty,
+      Nil,
+      t =>
+        if mode == OutputMode.Verbose then simulateDelayVerbose(t)
+        else Thread.sleep(delayMs(t))
+    )
