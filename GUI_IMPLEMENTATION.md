@@ -1,8 +1,9 @@
 # Fire Control System (FCS) — GUI Implementation
 
-Console interactive pour le **Fire Control System**. Cette interface offre un moyen ergonomique et convivial d'exécuter et de contrôler les différents modes du système de contrôle de tir pour véhicule blindé.
+Console interactive pour le **Fire Control System**. Cette interface offre un moyen ergonomique d'exécuter et de contrôler les différents modes du système de contrôle de tir pour véhicule blindé.
 
 **Important** : L'implémentation GUI se trouve sur la branche `gui` du projet. Veuillez cloner le projet avec la commande spécifique indiquée ci-dessous.
+Aucune GUI n'étant requise, ceci n'est que du bonus et offre simplement une manière plus moderne d'executer le projet 
 
 ## Prérequis
 
@@ -28,7 +29,7 @@ cd FCS_GUI
 .\src\main\scala\fcs\gui\lancer.bat
 ```
 
-Ou bien directement depuis l'explorateur de fichier
+Ou bien directement depuis l'explorateur de fichier avec un double clic
 
 La console interactive se lance dans une nouvelle fenêtre permettant d'exécuter les différentes commandes et modes du projet :
 
