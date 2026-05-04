@@ -41,6 +41,8 @@
 | T10 | error_recovery | {P9} -> {P0} |
 | T11 | kafka_log | {P11} -> {P12} |
 
+![Reseau de Petri du FCS](../fcs_petri_net.drawio.png)
+
 ---
 
 ## 3.2 Correspondance Acteur Akka <-> Reseau de Petri
@@ -110,4 +112,4 @@ Log_Recorded        .    .    .    .    .    .    .    .    .    .    .   +1
 | Scenarios multiples du Supervisor | Cycle generique |
 | Supervision et restart Akka | Abstrait par T9 -> T10 |
 
-Le diagramme complet est dans `docs/fcs_petri_net.drawio`.
+Le diagramme complet est disponible en version source dans `docs/fcs_petri_net.drawio` et en version image dans `docs/fcs_petri_net.drawio.png`.
