@@ -405,7 +405,7 @@ object CommandConsoleWin extends App {
     root.add(top, BorderLayout.NORTH)
     root.add(conPanel, BorderLayout.CENTER)
 
-    frame = new JFrame(s"⌨  SBT Console  [${OS.name2}]")
+    frame = new JFrame(s"  SBT Console  [${OS.name2}]")
     frame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE)
     frame.setPreferredSize(new Dimension(1020, 720))
     frame.getContentPane.setBackground(Pal.bg)
@@ -416,7 +416,7 @@ object CommandConsoleWin extends App {
 
     con.append(
       "\u001b[32m╔══════════════════════════════════════════════════════════╗\u001b[0m\n" +
-      "\u001b[32m║     Scala Command Console  ·  prêt                        ║\u001b[0m\n" +
+      "\u001b[32m║     Scala Command Console  ·  prêt                       ║\u001b[0m\n" +
       "\u001b[32m╚══════════════════════════════════════════════════════════╝\u001b[0m\n\n"
     )
     con.append("\u001b[36mClic sur un bouton pour lancer la commande sbt correspondante.\u001b[0m\n")
