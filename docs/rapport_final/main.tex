@@ -16,6 +16,8 @@
 \usepackage{float}
 \usepackage{pdflscape}
 \usepackage{caption}
+\usepackage[skip=\baselineskip,indent=1.5em]{parskip}
+\usepackage{indentfirst}
 \usepackage[numbers]{natbib}
 \usepackage[hidelinks]{hyperref}
 
@@ -44,7 +46,9 @@
 
 \begin{titlepage}
   \centering
-  \vspace*{2cm}
+  \vspace*{1.2cm}
+  \includegraphics[width=0.32\textwidth]{cy-tech.png}\par
+  \vspace{1.2cm}
   {\Huge\bfseries Fire Control System\par}
   \vspace{0.4cm}
   {\Large Modélisation fonctionnelle, réseau de Petri et vérification formelle\par}
@@ -79,7 +83,13 @@ La démarche suit six axes : état de l'art, modélisation fonctionnelle, traduc
 \chapter{Introduction}
 
 \section{Contexte}
-Un système de contrôle de tir (\emph{Fire Control System}, FCS) appartient à la famille des systèmes critiques : une action incorrecte peut entraîner des conséquences irréversibles. La sûreté du logiciel ne peut donc pas être ramenée à quelques scénarios de test. Le système doit empêcher par construction les situations dangereuses, notamment un tir sans cible verrouillée, sans munition disponible ou sans autorisation.
+Un système de contrôle de tir (\emph{Fire Control System}, FCS) appartient à la famille des systèmes critiques : une action incorrecte peut entraîner des conséquences irréversibles. Il s'agit d'une chaîne de décision qui observe l'environnement, suit une cible, vérifie la disponibilité des ressources, demande une autorisation, puis déclenche ou refuse l'action de tir. Chaque étape porte donc une responsabilité de sûreté : une information absente, incohérente ou traitée trop tôt peut modifier radicalement la décision finale.
+
+La gravité d'un tel système vient du fait qu'un défaut logiciel ne se limite pas à une erreur d'affichage ou à un résultat numérique imprécis. Dans un FCS, une transition mal contrôlée peut conduire à un tir sans cible verrouillée, sans munition cohérente, sans autorisation explicite, pendant une phase de rechargement ou sans journalisation exploitable. Ces situations doivent être impossibles par construction, et non simplement rares dans les tests.
+
+Un exemple concret est celui d'un char qui détecte un véhicule blindé adverse et prépare un tir avec une munition de type \texttt{APFSDS}. Dans l'implémentation, le cycle doit vérifier que la cible est suivie avec une confiance suffisante, que la munition demandée est disponible, que les règles d'engagement autorisent le tir, puis seulement déclencher l'action. Le code distingue plusieurs types de munitions, notamment \texttt{APFSDS}, \texttt{HEAT}, \texttt{HESH} et \texttt{HE}. Le réseau de Petri les abstrait ensuite en un stock borné générique, car la propriété de sûreté étudiée est la disponibilité et la synchronisation de la munition, non la physique détaillée de chaque obus.
+
+Le projet reste une abstraction académique : il ne modélise ni un calcul balistique réel complet, ni une doctrine opérationnelle exhaustive. En revanche, il reprend la discipline des systèmes critiques : comportement \emph{fail-safe}, préconditions explicites, traçabilité des événements et raisonnement exhaustif sur les états atteignables. La sûreté du logiciel ne peut donc pas être ramenée à quelques scénarios de test. Le système doit empêcher par construction les situations dangereuses, notamment un tir sans cible verrouillée, sans munition disponible ou sans autorisation.
 
 Le projet étudié adopte une double approche. D'une part, le comportement opérationnel est réalisé avec le modèle d'acteurs Akka Typed, qui permet de représenter naturellement la concurrence entre capteur, suivi balistique, gestion des munitions, commande et supervision. D'autre part, les comportements critiques sont abstraits dans un réseau de Petri fini afin de permettre une exploration exhaustive de l'espace d'états.
 
