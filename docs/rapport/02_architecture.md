@@ -101,4 +101,3 @@ Cela correspond a la **transition T4** du reseau de Petri (synchronisation P3 + 
 | `fcs.fire.executed` | Tir effectue | FireControlActor |
 | `fcs.ammo.status` | Munition chargee | AmmoActor |
 | `fcs.error.critical` | Erreur fatale | SupervisorActor |
-| `fcs.audit.log` | Journal | KafkaProducerActor |
